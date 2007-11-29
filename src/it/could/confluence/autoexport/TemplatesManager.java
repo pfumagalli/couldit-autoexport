@@ -49,6 +49,7 @@ import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.exception.ParseErrorException;
 import org.apache.velocity.exception.ResourceNotFoundException;
 
+import com.atlassian.confluence.setup.BootstrapManager;
 import com.atlassian.confluence.util.ConfluenceVelocityResourceCache;
 import com.opensymphony.webwork.views.velocity.VelocityManager;
 
@@ -62,14 +63,11 @@ implements TemplatesAware {
     /** <p>The encoding used to load, save, and parse templates.</p> */
     public static final String ENCODING = "UTF-8";
 
-    /** <p>The {@link ConfigurationManager} used to locate templates.</p> */
-    private final ConfigurationManager configurationManager;
+    /** <p>The {@link BootstrapManager} used to locate templates.</p> */
+    private BootstrapManager bootstrapManager = null;
 
-    /** <p>Create a new {TemplatesManager} instance.</p> */
-    public TemplatesManager(ConfigurationManager configurationManager) {
-        this.configurationManager = configurationManager;
-        this.log.info("Instance created");
-    }
+    /** <p>Deny public construction.</p> */
+    TemplatesManager() { }
 
     /* ====================================================================== */
     /* PRIVATE METHODS TO ACCESS THE FILES UNDERLYING THE TEMPLATES           */
@@ -108,7 +106,7 @@ implements TemplatesAware {
      * <p>Return the {@link File} associated with a space template.</p>
      */
     private File file(String spaceKey) {
-        final String home = this.configurationManager.getConfluenceHome();
+        final String home = this.bootstrapManager.getConfiguredConfluenceHome();
         final File templates = new File(home, "velocity");
         return spaceKey == null ? new File(templates, "autoexport.vm") :
                new File(templates, "autoexport." + spaceKey + ".vm");
@@ -225,7 +223,6 @@ implements TemplatesAware {
 
         /* Attempt to write the template string down to a file */
         try {
-            if (! directory.isDirectory()) directory.mkdirs();
             final File temp = File.createTempFile("tpl-", ".tmp", directory);
             final OutputStream output = new FileOutputStream(temp);
             output.write(template.getBytes(ENCODING));
@@ -249,5 +246,16 @@ implements TemplatesAware {
 
         /* Ensure that the template can be parsed (and pre-cache it) */
         this.getTemplate(spaceKey);
+    }
+
+    /* ====================================================================== */
+    /* BEAN SETTER METHODS FOR SPRING AUTO-WIRING                             */
+    /* ====================================================================== */
+
+    /**
+     * <p>Setter for Spring's component wiring.</p>
+     */
+    public void setBootstrapManager(BootstrapManager bootstrapManager) {
+        this.bootstrapManager = bootstrapManager;
     }
 }

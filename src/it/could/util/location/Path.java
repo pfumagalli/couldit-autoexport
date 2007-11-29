@@ -436,15 +436,6 @@ public class Path extends AbstractList implements Encodable {
     /* ====================================================================== */
 
     /**
-     * <p>Return the name of the file in the path wrapped by this instance.</p>
-     */
-    public String filename() {
-        if (this.isCollection()) return null;
-        final PathElement element = this.paths[this.paths.length - 1];
-        return element.getName();
-    }
-
-    /**
      * <p>Return the {@link PathElement} instance at the specified index.</p>
      */
     public Object get(int index) {

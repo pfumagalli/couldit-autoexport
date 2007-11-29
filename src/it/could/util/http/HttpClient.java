@@ -75,8 +75,6 @@ public class HttpClient {
     private final Map requestHeaders = new HashMap();
     /** <p>The map of the current response headers.</p> */
     private final Map responseHeaders = new HashMap();
-    /** <p>The socket factory instance used by this.</p> */
-    private final SocketFactory socketFactory;
 
     /* ====================================================================== */
 
@@ -106,18 +104,7 @@ public class HttpClient {
      */
     public HttpClient(String location)
     throws MalformedURLException {
-        this(Location.parse(location), null);
-    }
-
-    /**
-     * <p>Create a new {@link HttpClient} instance associated with the
-     * specified location in string format.</p>
-     * 
-     * @throws MalformedURLException if the location couldn't be parsed.
-     */
-    public HttpClient(String location, SocketFactory factory)
-    throws MalformedURLException {
-        this(Location.parse(location), factory);
+        this.location = Location.parse(location);
     }
 
     /**
@@ -128,18 +115,7 @@ public class HttpClient {
      */
     public HttpClient(String location, String encoding)
     throws MalformedURLException, UnsupportedEncodingException {
-        this(Location.parse(location, encoding), null);
-    }
-
-    /**
-     * <p>Create a new {@link HttpClient} instance associated with the
-     * specified location in string format.</p>
-     * 
-     * @throws MalformedURLException if the location couldn't be parsed.
-     */
-    public HttpClient(String location, String encoding, SocketFactory factory)
-    throws MalformedURLException, UnsupportedEncodingException {
-        this(Location.parse(location, encoding), factory);
+        this.location = Location.parse(location, encoding);
     }
 
     /**
@@ -147,21 +123,13 @@ public class HttpClient {
      * specified {@link Location}.</p>
      */
     public HttpClient(Location location) {
-        this(location, null);
-    }
-
-    /**
-     * <p>Create a new {@link HttpClient} instance associated with the
-     * specified {@link Location}.</p>
-     */
-    public HttpClient(Location location, SocketFactory factory) {
-        if (factory == null) factory = new PlainSocketFactory();
         if (location == null) throw new NullPointerException("Null location");
         if (! location.isAbsolute()) 
             throw new IllegalArgumentException("Relative location supplied");
-        
+        if (! "http".equals(location.getScheme())) {
+            throw new IllegalArgumentException("Scheme is not HTTP");
+        }
         this.location = location;
-        this.socketFactory = factory;
     }
 
     /* ====================================================================== */
@@ -381,13 +349,11 @@ public class HttpClient {
 
             /* Prepare a normalized host header */
             final String host = auth.getHost();
-            final int port = auth.getPort() == Authority.UNSPECIFIED_PORT ?
-                             Authority.getPort(location.getScheme()) :
-                             auth.getPort();
+            final int port = auth.getPort() < 0 ? 80 : auth.getPort();
             this.addRequestHeader("Host", host + ":" + port, false);
     
             /* Connect to the remote endpoint */
-            final Socket sock = this.socketFactory.open(auth.getHost(), port);
+            final Socket sock = new Socket(auth.getHost(), port);
             final InputStream in = sock.getInputStream();
             final OutputStream out = sock.getOutputStream();
 
@@ -868,25 +834,6 @@ public class HttpClient {
         throws UnsupportedEncodingException {
             this.name = name;
             this.values = new ArrayList();
-        }
-    }
-
-    /* ====================================================================== */
-    /* SOCKET FACTORIES                                                       */
-    /* ====================================================================== */
-    
-    public static interface SocketFactory {
-        
-        public Socket open(String host, int port)
-        throws IOException;
-        
-    }
-    
-    private static final class PlainSocketFactory implements SocketFactory {
-        
-        public Socket open(String host, int port)
-        throws IOException {
-            return new Socket(host, port);
         }
     }
 

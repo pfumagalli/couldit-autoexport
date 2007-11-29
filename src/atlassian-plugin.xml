@@ -51,19 +51,9 @@
         <a href="autoexport/configuration.action">Configure plugin</a>        
       ]]>
     </description>
-    <vendor name="Pier Fumagalli" url="http://could.it/autoexport/"/>
+    <vendor name="Pier Fumagalli" url="http://could.it/"/>
     <version>@VERSION@</version>
   </plugin-info>
-
-  <!--+ ========================================================================
-      | COMPONENTS CONFIGURATION
-      | - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      | The configured components will be shared amongst the other instances
-      | declared below.
-      + --> 
-  <component name="AutoExport Manager" class="it.could.confluence.autoexport.AutoExportManager" key="autoExportManager">
-    <description>A component managing the different subcomponents of the AutoExport plugin.</description>
-  </component>
 
   <!--+ ========================================================================
       | LISTENER CONFIGURATION

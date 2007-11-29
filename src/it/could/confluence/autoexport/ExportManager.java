@@ -31,10 +31,9 @@
  * ========================================================================== */
 package it.could.confluence.autoexport;
 
-import it.could.confluence.autoexport.engine.ExportBeautifier;
 import it.could.confluence.autoexport.engine.ExportUtils;
+import it.could.confluence.autoexport.engine.ExportBeautifier;
 import it.could.confluence.autoexport.engine.Notifiable;
-import it.could.confluence.localization.LocalizedComponent;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -49,7 +48,9 @@ import java.util.List;
 
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
-import org.apache.velocity.exception.MethodInvocationException;
+
+import bucket.container.ContainerManager;
+import bucket.util.FileUtils;
 
 import com.atlassian.confluence.core.actions.StylesheetAction;
 import com.atlassian.confluence.pages.AbstractPage;
@@ -60,12 +61,10 @@ import com.atlassian.confluence.pages.PageManager;
 import com.atlassian.confluence.pages.actions.ViewPageAction;
 import com.atlassian.confluence.pages.thumbnail.ThumbnailManager;
 import com.atlassian.confluence.renderer.WikiStyleRenderer;
+import com.atlassian.confluence.setup.BootstrapManager;
 import com.atlassian.confluence.spaces.Space;
 import com.atlassian.confluence.spaces.SpaceManager;
 import com.atlassian.confluence.util.GeneralUtil;
-import com.atlassian.core.util.FileUtils;
-import com.atlassian.plugin.PluginAccessor;
-import com.atlassian.spring.container.ContainerManager;
 import com.opensymphony.util.TextUtils;
 import com.opensymphony.xwork.ActionContext;
 
@@ -73,50 +72,67 @@ import com.opensymphony.xwork.ActionContext;
  * <p>The {@link ExportManager} class represents the core object exporting
  * content out of Confluence.</p>
  */
-public class ExportManager extends LocalizedComponent {
-
+public class ExportManager extends ComponentSupport {
+    
     /** <p>The key for the request in the current {@link ActionContext}.</p> */ 
     private static final String AC_REQUEST_KEY =
                         "com.opensymphony.xwork.dispatcher.HttpServletRequest";
 
-    /** <p>The {@link TemplatesManager} used by this instance.</p> */
-    private final TemplatesManager templatesManager;
     /** <p>The {@link LocationManager} used by this instance.</p> */
     private final LocationManager locationManager;
-    /** <p>The {@link ConfigurationManager} used by this instance.</p> */
-    private final ConfigurationManager configurationManager;
+    /** <p>The {@link BootstrapManager} used by this instance.</p> */
+    private BootstrapManager bootstrapManager = null;
     /** <p>The {@link PageManager} used by this instance.</p> */
-    private final PageManager pageManager;
+    private PageManager pageManager = null;
     /** <p>The {@link SpaceManager} used by this instance.</p> */
-    private final SpaceManager spaceManager;
+    private SpaceManager spaceManager = null;
     /** <p>The {@link ThumbnailManager} used by this instance.</p> */
-    private final ThumbnailManager thumbnailManager;
+    private ThumbnailManager thumbnailManager = null;
     /** <p>The {@link WikiStyleRenderer} rendering content.</p> */
-    private final WikiStyleRenderer wikiStyleRenderer;
-    /** <p>The {@link PluginAccessor} gathering plugin details.</p> */
-    private final PluginAccessor pluginAccessor;
+    private WikiStyleRenderer wikiStyleRenderer = null;
 
-    /** <p>Create a new {@link ExportManager} instance.</p> */
-    ExportManager(TemplatesManager templatesManager,
-                  LocationManager locationManager,
-                  ConfigurationManager configurationManager,
-                  SpaceManager spaceManager,
-                  PageManager pageManager,
-                  ThumbnailManager thumbnailManager,
-                  WikiStyleRenderer wikiStyleRenderer,
-                  PluginAccessor pluginAccessor) {
-
-        this.templatesManager = templatesManager;
+    /** <p>Deny public construction.</p> */
+    ExportManager(LocationManager locationManager) {
         this.locationManager = locationManager;
-        this.configurationManager = configurationManager;
+    }
+
+    /* ====================================================================== */
+    /* SPRING AUTO-WIRING SETTERS                                             */
+    /* ====================================================================== */
+
+    /**
+     * <p>Setter for Spring's component wiring.</p>
+     */
+    public void setBootstrapManager(BootstrapManager bootstrapManager) {
+        this.bootstrapManager = bootstrapManager;
+    }
+
+    /**
+     * <p>Setter for Spring's component wiring.</p>
+     */
+    public void setSpaceManager(SpaceManager spaceManager) {
         this.spaceManager = spaceManager;
+    }
+    
+    /**
+     * <p>Setter for Spring's component wiring.</p>
+     */
+    public void setPageManager(PageManager pageManager) {
         this.pageManager = pageManager;
+    }
+
+    /**
+     * <p>Setter for Spring's component wiring.</p>
+     */
+    public void setThumbnailManager(ThumbnailManager thumbnailManager) {
         this.thumbnailManager = thumbnailManager;
+    }
+
+    /**
+     * <p>Setter for Spring's component wiring.</p>
+     */
+    public void setWikiStyleRenderer(WikiStyleRenderer wikiStyleRenderer) {
         this.wikiStyleRenderer = wikiStyleRenderer;
-        this.pluginAccessor = pluginAccessor;
-
-        this.log.info("Instance created");
-
     }
 
     /* ====================================================================== */
@@ -164,12 +180,12 @@ public class ExportManager extends LocalizedComponent {
         this.debug("msg.exporting-space", space, null, null);
 
         if (exportPages) {
-            final List pagesList = this.pageManager.getPages(space, true);
+            final List pagesList = this.spaceManager.getPages(space, true);
             final Iterator pages = pagesList.iterator();
             while (pages.hasNext()) {
                 this.export((Page) pages.next(), notifiable);
             }
-            final List postsList = this.pageManager.getBlogPosts(space, true);
+            final List postsList = this.spaceManager.getBlogPosts(space, true);
             final Iterator posts = postsList.iterator();
             while (posts.hasNext()) {
                 this.export((BlogPost) posts.next(), notifiable);
@@ -214,18 +230,14 @@ public class ExportManager extends LocalizedComponent {
             final Template template = this.templatesManager.getTemplate(page.getSpaceKey());
             final String body = this.wikiStyleRenderer.convertWikiToXHtml(page.toPageContext(), page.getContent());
             final String styleUri = this.locationManager.getLocation(page.getSpace(), "space.css").toString();
-            final String confluenceUrl = this.configurationManager.getConfluenceUrl();
-            final ViewPageAction action = new ViewPageAction();
+            final String confluenceUri = this.bootstrapManager.getBaseUrl();
+            final Object action = new ViewPageAction();
             ContainerManager.autowireComponent(action);
-            action.setPage(page);
 
             context.put("generalUtil", new GeneralUtil());
             context.put("webwork", new TextUtils());
-            context.put("autoexport", new ExportUtils(this.configurationManager,
-                                                      this.wikiStyleRenderer,
-                                                      this.pluginAccessor));
-            context.put("pageManager", this.pageManager);
-            context.put("confluenceUri", confluenceUrl);
+            context.put("autoexport", new ExportUtils());
+            context.put("confluenceUri", confluenceUri);
             context.put("stylesheet", styleUri);
             context.put("action", action);
             context.put("page", page);
@@ -240,16 +252,10 @@ public class ExportManager extends LocalizedComponent {
                 writer.flush();
                 writer.close();
                 final ExportBeautifier beautifier = new ExportBeautifier(page,
-                                        this.configurationManager,
+                                        this.configurationManager.getEncoding(),
                                         this.pageManager, this.spaceManager,
-                                        this.locationManager);
+                                        this.locationManager, this.bootstrapManager);
                 beautifier.beautify(writer.toString(), pageFile);
-            } catch (MethodInvocationException exception) {
-                Throwable throwable = exception.getWrappedThrowable();
-                if (throwable != null)
-                    this.error(notifiable, throwable, "err.invoking-method", null, page, null);
-                this.error(notifiable, exception, "err.exporting-page", null, page, null);
-                System.err.println(exception.getReferenceName());
             } catch (Exception exception) {
                 this.error(notifiable, exception, "err.exporting-page", null, page, null);
             }

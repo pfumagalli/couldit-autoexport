@@ -31,45 +31,39 @@
  * ========================================================================== */
 package it.could.confluence.autoexport.actions;
 
-import it.could.confluence.autoexport.AutoExportManager;
-import it.could.confluence.autoexport.ConfigurationManager;
-import it.could.confluence.autoexport.TemplatesManager;
-import it.could.confluence.localization.LocalizedAction;
+import it.could.confluence.autoexport.ActionSupport;
 import it.could.confluence.localization.LocalizedException;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
+import bucket.container.ContainerManager;
+
 import com.atlassian.confluence.core.Administrative;
 import com.atlassian.confluence.spaces.SpaceManager;
-import com.atlassian.confluence.spaces.SpaceType;
 
 /**
  * <p>An action managing the AutoExport plugin configuration.</p>
  */
-public class ConfigurationAction extends LocalizedAction
+public class ConfigurationAction extends ActionSupport
 implements Administrative {
 
     /** <p>The {@link SpaceManager} wired by Spring.</p> */
     private SpaceManager spaceManager = null;
-    /** <p>The {@link ConfigurationManager} wired by Spring.</p> */
-    private ConfigurationManager configurationManager = null;
-    /** <p>The {@link TemplatesManager} wired by Spring.</p> */
-    private TemplatesManager templatesManager = null;
 
     /** <p>The currently configured encoding.</p> */
-    private String encoding = null;
+    private String encoding = this.configurationManager.getEncoding();
     /** <p>The currently configured root path.</p> */
-    private String rootPath = null;
+    private String rootPath = this.configurationManager.getRootPath();
     /** <p>The currently configured user name.</p> */
-    private String userName = null;
+    private String userName = this.configurationManager.getUserName();
 
     /**
      * <p>Create a new {@link ConfigurationAction} instance.</p>
      */
     public ConfigurationAction() {
-        this.log.info("Instance created");
+        ContainerManager.autowireComponent(this);
     }
 
     /* ====================================================================== */
@@ -83,14 +77,6 @@ implements Administrative {
         this.spaceManager = spaceManager;
     }
 
-    /**
-     * <p>Setter for Spring's component owiring.</p>
-     */
-    public void setAutoExportManager(AutoExportManager autoExportManager) {
-        this.templatesManager = autoExportManager.getTemplatesManager();
-        this.configurationManager = autoExportManager.getConfigurationManager();
-    }
-
     /* ====================================================================== */
     /* ACTION METHODS                                                         */
     /* ====================================================================== */
@@ -99,9 +85,6 @@ implements Administrative {
      * <p>Review the current configuration.</p>
      */
     public String execute() {
-        this.encoding = this.configurationManager.getEncoding();
-        this.rootPath = this.configurationManager.getRootPath();
-        this.userName = this.configurationManager.getUserName();
         try {
             if (this.configurationManager.isConfigured()) return SUCCESS;
             this.addActionError(this.getText("err.unconfigured"));
@@ -228,10 +211,7 @@ implements Administrative {
      * <p>Return a {@link List} of all spaces in Confluence.</p>
      */
     public List getSpaces() {
-    	final List list = new ArrayList();
-    	list.addAll(this.spaceManager.getSpacesByType(SpaceType.GLOBAL));
-    	list.addAll(this.spaceManager.getSpacesByType(SpaceType.PERSONAL));
-    	return list;
+        return this.spaceManager.getSpaces();
     }
 
     /**

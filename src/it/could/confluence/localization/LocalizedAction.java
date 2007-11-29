@@ -37,8 +37,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
+import bucket.container.ContainerManager;
+
 import com.atlassian.confluence.core.ConfluenceActionSupport;
-import com.atlassian.spring.container.ContainerManager;
 import com.opensymphony.xwork.ActionContext;
 
 /**

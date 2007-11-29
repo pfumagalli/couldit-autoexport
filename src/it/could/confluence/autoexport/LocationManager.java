@@ -31,7 +31,6 @@
  * ========================================================================== */
 package it.could.confluence.autoexport;
 
-import it.could.confluence.localization.LocalizedComponent;
 import it.could.util.location.Location;
 
 import java.io.File;
@@ -43,35 +42,56 @@ import com.atlassian.confluence.pages.Attachment;
 import com.atlassian.confluence.pages.BlogPost;
 import com.atlassian.confluence.security.Permission;
 import com.atlassian.confluence.security.PermissionManager;
+import com.atlassian.confluence.setup.BootstrapManager;
 import com.atlassian.confluence.spaces.Space;
 import com.atlassian.user.EntityException;
 import com.atlassian.user.User;
 import com.atlassian.user.UserManager;
 
-public class LocationManager extends LocalizedComponent {
+public class LocationManager extends ComponentSupport {
     
     private static final String SPACE_RESOURCES_DIR = "resources/";
     private static final String ATTACHMENTS_DIR_EXT = ".data/";
     private static final String THUMBNAILS_FILE_EXT = ".jpeg";
     private static final Location AUTOEXPORT_LOCATION = Location.parse("autoexport:///.");
 
-    /** <p>The {@link ConfigurationManager} used by this instance.</p> */
     private final ConfigurationManager configurationManager;
+
+    /** <p>The {@link BootstrapManager} used by this instance.</p> */
+    private BootstrapManager bootstrapManager;
     /** <p>The {@link PermissionManager} used by this instance.</p> */
-    private final PermissionManager permissionManager;
+    private PermissionManager permissionManager = null;
     /** <p>The {@link UserManager} used by this instance.</p> */
-    private final UserManager userManager;
+    private UserManager userManager = null;
 
-    /** <p>Create a new {@link LocationManager} instance.</p> */
-    LocationManager(ConfigurationManager configurationManager,
-                    PermissionManager permissionManager,
-                    UserManager userManager) {
-
+    /** <p>Deny public construction of this class.</p> */
+    LocationManager(ConfigurationManager configurationManager) {
         this.configurationManager = configurationManager;
-        this.permissionManager = permissionManager;
-        this.userManager = userManager;
+    }
 
-        this.log.info("Instance created");
+    /* ====================================================================== */
+    /* SPRING AUTO-WIRING SETTERS                                             */
+    /* ====================================================================== */
+
+    /**
+     * <p>Setter for Spring's component wiring.</p>
+     */
+    public void setBootstrapManager(BootstrapManager bootstrapManager) {
+        this.bootstrapManager = bootstrapManager;
+    }
+
+    /**
+     * <p>Setter for Spring's component wiring.</p>
+     */
+    public void setPermissionManager(PermissionManager permissionManager) {
+        this.permissionManager = permissionManager;
+    }
+
+    /**
+     * <p>Setter for Spring's component wiring.</p>
+     */
+    public void setUserManager(UserManager userManager) {
+        this.userManager = userManager;
     }
 
     /* ====================================================================== */
@@ -182,7 +202,7 @@ public class LocationManager extends LocalizedComponent {
     
     public Location getLocation(AbstractPage page) {
         if (! this.exportable(page)) {
-            final String base = this.configurationManager.getConfluenceUrl(); 
+            final String base = this.bootstrapManager.getBaseUrl(); 
             return Location.parse(base + page.getUrlPath());
         }
 
@@ -201,7 +221,7 @@ public class LocationManager extends LocalizedComponent {
 
     public Location getLocation(Attachment attachment, boolean thumbnail) {
         if (! this.exportable(attachment)) {
-            final String base = this.configurationManager.getConfluenceUrl(); 
+            final String base = this.bootstrapManager.getBaseUrl(); 
             return Location.parse(base + attachment.getUrlPath());
         }
 

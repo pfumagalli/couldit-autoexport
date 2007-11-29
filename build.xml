@@ -33,7 +33,7 @@
 
 <project name="Confluence AutoExport Plugin" default="all" basedir=".">
 
-  <property name="version"  value="0.15-dev"/>
+  <property name="version"  value="0.13"/>
   
   <property name="dir.source"     value="${basedir}/src"/>
   <property name="dir.build"      value="${basedir}/build"/>
@@ -100,7 +100,6 @@
     <javac classpathref="classpath"
            srcdir="${dir.source}"
            destdir="${dir.build}"
-           optimize="true"
            debug="true">
       <include name="**/*.java"/>
     </javac>
@@ -122,15 +121,8 @@
   <!-- Prepare a jar file that can be uploaded into Confluence -->
   <target name="jar" depends="compile"
           description="  Build the plugin JAR file">
-    <jar file="autoexport-${version}.jar" filesonly="true">
-      <fileset dir="${dir.build}" excludes="**/*.java">
-        <exclude name="**/*.pdf"/>
-        <exclude name="**/*.png"/>
-        <exclude name="**/*.gif"/>
-        <exclude name="**/*.jpeg"/>
-        <exclude name="**/*.html"/>
-      </fileset>
-    </jar>
+    <jar file="autoexport-${version}.jar"
+         basedir="${dir.build}"/>
   </target>
 
   <!-- Prepare the JavaDoc API and zip them up for distribution -->
@@ -177,31 +169,14 @@
    | Automatically reload plugin within confluence                             |
    + ======================================================================= -->
   
-  <target name="install" depends="checkreload,canreload,jar"
-          description="  Install the plugin in confluence">
-    <property name="login" value="&amp;os_username=${confluence.user}&amp;os_password=${confluence.pass}"/>
-    <property name="baseuri" value="${confluence.uri}admin/plugins.action"/>
-    <mkdir dir="${confluence.home}/plugin-cache"/>
-    <copy todir="${confluence.home}/plugin-cache" file="autoexport-${version}.jar"/>
-    <get dest="temp-reload.out" src="${baseuri}?mode=rescan${login}"/>
-    <delete file="temp-reload.out"/>
-  </target>
-  
   <target name="reload" depends="checkreload,canreload,jar"
           description="  Rebuild and reload in confluence">
-    <property name="login" value="os_username=${confluence.user}&amp;os_password=${confluence.pass}"/>
-    <property name="uninst" value="mode=uninstall&amp;pluginKey=confluence.extra.autoexport"/>
-    <echo message="Uninstalling old plugin version..."/>
-    <exec executable="curl" output="/dev/null" error="/dev/null">
-      <arg value="${confluence.uri}admin/plugins.action?${login}&amp;${uninst}"/>
-    </exec>
-    <echo message="Uploading new plugin jar file..."/>
-    <exec executable="curl" output="/dev/null" error="/dev/null">
-      <arg value="-F"/>
-      <arg value="file_0=@autoexport-${version}.jar"/>
-      <arg value="${confluence.uri}admin/uploadplugin.action?${login}"/>
-    </exec>
-    <echo message="Confluence reloaded."/>
+    <property name="login" value="&amp;os_username=${confluence.user}&amp;os_password=${confluence.pass}"/>
+    <property name="baseuri" value="${confluence.uri}admin/plugins.action"/>
+    <get dest="temp-reload.out" src="${baseuri}?mode=uninstall&amp;pluginKey=confluence.extra.autoexport${login}"/>
+    <copy todir="${confluence.home}/plugins" file="autoexport-${version}.jar"/>
+    <get dest="temp-reload.out" src="${baseuri}?mode=rescan${login}"/>
+    <delete file="temp-reload.out"/>
   </target>
   
 
