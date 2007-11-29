@@ -31,14 +31,16 @@
  * ========================================================================== */
 package it.could.confluence.autoexport.engine;
 
-import it.could.confluence.autoexport.AutoExportManager;
+import it.could.confluence.autoexport.ComponentSupport;
 import it.could.confluence.autoexport.ExportManager;
-import it.could.confluence.localization.LocalizedComponent;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import bucket.container.ContainerManager;
+
+import com.atlassian.confluence.event.EventListener;
 import com.atlassian.confluence.event.events.ConfluenceEvent;
 import com.atlassian.confluence.event.events.content.blogpost.BlogPostCreateEvent;
 import com.atlassian.confluence.event.events.content.blogpost.BlogPostRemoveEvent;
@@ -49,14 +51,12 @@ import com.atlassian.confluence.event.events.content.page.PageUpdateEvent;
 import com.atlassian.confluence.pages.AbstractPage;
 import com.atlassian.confluence.pages.BlogPost;
 import com.atlassian.confluence.pages.Page;
-import com.atlassian.event.Event;
-import com.atlassian.event.EventListener;
 
 /**
  * <p>A Confluence {@link EventListener} instance triggering exports and
  * deletions in the {@link ExportManager}.</p>
  */
-public class ExportListener extends LocalizedComponent implements EventListener {
+public class ExportListener extends ComponentSupport implements EventListener {
 
     /** <p>The array of events this instance can handle.</p> */
     private static final Class HANDLED_EVENTS[] = new Class[] {
@@ -72,36 +72,18 @@ public class ExportListener extends LocalizedComponent implements EventListener 
     /** <p>A {@link Map} used to hack infra-space moves of {@link Page}s.</p> */
     private final Map hack = new HashMap();
 
-    /** <p>The {@link ExportManager} used by this instance.</p> */
-    private ExportManager exportManager = null;
-
     /**
      * <p>Create a new {@link ExportListener} instance.</p>
      */
     public ExportListener() {
-        this.log.info("Instance created");
+        ContainerManager.autowireComponent(this);
     }
-
-    /* ====================================================================== */
-    /* BEAN SETTER METHODS FOR SPRING AUTO-WIRING                             */
-    /* ====================================================================== */
-
-    /**
-     * <p>Setter for Spring's component owiring.</p>
-     */
-    public void setAutoExportManager(AutoExportManager autoExportManager) {
-        this.exportManager = autoExportManager.getExportManager();
-    }
-
-    /* ====================================================================== */
-    /* EVENT HANDLING METHODS                                                 */
-    /* ====================================================================== */
 
     /**
      * <p>Handle a {@link ConfluenceEvent} triggering export and remove
      * operations in the {@link ExportManager}.</p>
      */
-    public void handleEvent(Event event) {
+    public void handleEvent(ConfluenceEvent event) {
         if (event instanceof PageCreateEvent) {
             final PageCreateEvent pageEvent = (PageCreateEvent) event;
             this.export(pageEvent.getPage());

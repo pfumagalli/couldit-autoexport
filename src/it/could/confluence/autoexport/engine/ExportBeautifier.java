@@ -31,7 +31,6 @@
  * ========================================================================== */
 package it.could.confluence.autoexport.engine;
 
-import it.could.confluence.autoexport.ConfigurationManager;
 import it.could.confluence.autoexport.ExportManager;
 import it.could.confluence.autoexport.LocationManager;
 import it.could.util.encoding.EncodingTools;
@@ -67,6 +66,8 @@ import org.cyberneko.html.parsers.SAXParser;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import bucket.container.ContainerManager;
+
 import com.atlassian.confluence.pages.AbstractPage;
 import com.atlassian.confluence.pages.Attachment;
 import com.atlassian.confluence.pages.PageManager;
@@ -76,9 +77,9 @@ import com.atlassian.confluence.servlet.simpledisplay.PagePathConverter;
 import com.atlassian.confluence.servlet.simpledisplay.PathConverter;
 import com.atlassian.confluence.servlet.simpledisplay.SpacePathConverter;
 import com.atlassian.confluence.servlet.simpledisplay.UserPathConverter;
+import com.atlassian.confluence.setup.BootstrapManager;
 import com.atlassian.confluence.spaces.Space;
 import com.atlassian.confluence.spaces.SpaceManager;
-import com.atlassian.spring.container.ContainerManager;
 
 /**
  * <p>The {@link ExportBeautifier} is used by the {@link ExportManager} to
@@ -156,25 +157,28 @@ public class ExportBeautifier extends Writer {
      * <p>Create a new {@link ExportBeautifier} instance.</p>
      */
     public ExportBeautifier(AbstractPage page,
-                            ConfigurationManager configurationManager,
+                            String encoding,
                             PageManager pageManager,
                             SpaceManager spaceManager,
-                            LocationManager locationManager) {
+                            LocationManager locationManager,
+                            BootstrapManager bootstrapManager) {
 
         this.pageManager = pageManager;
         this.spaceManager = spaceManager;
         this.locationManager = locationManager;
 
         this.exportUrl = locationManager.getLocation(page);
-        this.encoding = configurationManager.getEncoding();
-        this.confluenceBase = configurationManager.getConfluenceUrl();
-        
-        this.entityUrl = Location.parse(this.confluenceBase + page.getUrlPath());
-        this.displayUrl = Location.parse(this.confluenceBase + "/display/");
-        this.viewPageUrl = Location.parse(this.confluenceBase + "/pages/viewpage.action");
-        this.viewSpaceUrl = Location.parse(this.confluenceBase + "/spaces/viewspace.action");
-        this.thumbnailUrl = Location.parse(this.confluenceBase + "/download/thumbnails/");
-        this.attachmentUrl = Location.parse(this.confluenceBase + "/download/attachments/");
+
+        final String base = bootstrapManager.getBaseUrl();
+        this.entityUrl = Location.parse(base + page.getUrlPath());
+        this.displayUrl = Location.parse(base + "/display/");
+        this.viewPageUrl = Location.parse(base + "/pages/viewpage.action");
+        this.viewSpaceUrl = Location.parse(base + "/spaces/viewspace.action");
+        this.thumbnailUrl = Location.parse(base + "/download/thumbnails/");
+        this.attachmentUrl = Location.parse(base + "/download/attachments/");
+
+        this.confluenceBase = base;
+        this.encoding = encoding;
     }
 
     /**
