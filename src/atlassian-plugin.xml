@@ -33,7 +33,7 @@
    
 <atlassian-plugin name="Auto Export Plugin" key="confluence.extra.autoexport">
   
-  <!--+ ========================================================================
+  <!--+ =======================================================================
       | PLUGIN DETAILS
       | - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       | Interesting is the <description /> part of this plugin, which will be
@@ -41,7 +41,7 @@
       | simply give out a link pointing to the custom actions that will
       | configure the plugin itself, integrating this functionality nicely into
       | Confluence's user interface.
-      + --> 
+      +--> 
   <plugin-info>
     <description>
       <![CDATA[
@@ -51,114 +51,114 @@
         <a href="autoexport/configuration.action">Configure plugin</a>        
       ]]>
     </description>
-    <vendor name="Pier Fumagalli" url="http://could.it/autoexport/"/>
-    <version>@VERSION@</version>
+    <vendor name="Pier Fumagalli" url="http://could.it/"/>
+    <version>0.10</version>
   </plugin-info>
 
-  <!--+ ========================================================================
-      | COMPONENTS CONFIGURATION
+  <!--+ =======================================================================
+      | AUTOEXPORT MANAGER CONFIGURATION
       | - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      | The configured components will be shared amongst the other instances
-      | declared below.
-      + --> 
-  <component name="AutoExport Manager" class="it.could.confluence.autoexport.AutoExportManager" key="autoExportManager">
-    <description>A component managing the different subcomponents of the AutoExport plugin.</description>
-  </component>
+      | The AutoExportManager class _should_ be deployed as a XXX plugin,
+      | that said, I'm currently observing two problems with this approach.
+      |
+      | The first (and most important one) is that the when the plugin is
+      | reloaded Confluence throws an IllegalStateException mentioning "Can not
+      | overwrite an existing bean definition: autoExport". This forbids plugins
+      | reload.
+      |
+      | The second one (to investigate when the first issue is solved) is that
+      | the plugin itself doesn't seem to be autowired, (we need to manually
+      | wire it calling ContainerManager.autowireComponent(this) in the default
+      | constructor), and the produced instance is never registered and set when
+      | other components try to wire it up.
+      |
+      | For those two reason, I left a static initialization method in there and
+      | there is a static final field called "instance" used by anyone willing
+      | to use the AutoExportManager singleton instance.
+      |
+      | See: http://jira.atlassian.com/browse/CONF-5632
+      +--> 
+  <!--component name="AutoExport Manager" class="it.could.confluence.autoexport.AutoExport" key="autoExport">
+    <description>A manager for all configuration aspects of the Auto Export plugin.</description>
+  </component--> 
 
-  <!--+ ========================================================================
-      | LISTENER CONFIGURATION
-      | - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      | The configured listener will wait for events and (when appropriate)
-      | will trigger automatic export operations of the added/edited content.
-      + --> 
   <listener name="Auto Export Listener" class="it.could.confluence.autoexport.engine.ExportListener" key="autoExportListener">
     <description>Listens to modifications in Confluence's pages and triggers exports.</description>
   </listener>
 
-  <!--+ ========================================================================
-      | ACTIONS CONFIGURATION
-      | - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      | The following actions build up the AutpExport plugin control-panel.
-      + --> 
   <xwork name="Auto Export Administration" key="autoexportAction">
     <description>Action to enable browser-based configuration of the Auto Export Plugin.</description>
 
     <package name="autoexport" extends="default" namespace="/admin/autoexport">
 
-      <!--+ ====================================================================
-          | Actions related to configuration of the AutoExport plugin
-          + -->
+      <!-- Actions related to configuration of the AutoExport plugin -->
       
       <action class="it.could.confluence.autoexport.actions.ConfigurationAction"
               name="configuration">
-        <result name="success" type="velocity">/it/could/confluence/autoexport/templates/ConfigurationAction_success.vm</result>
+        <result name="success" type="velocity">/it/could/confluence/autoexport/actions/ConfigurationAction_success.vm</result>
         <interceptor-ref name="defaultStack"/>
       </action>
 
       <action class="it.could.confluence.autoexport.actions.ConfigurationAction"
               name="configuration-save" method="configure">
-        <result name="success" type="velocity">/it/could/confluence/autoexport/templates/ConfigurationAction_success.vm</result>
+        <result name="success" type="velocity">/it/could/confluence/autoexport/actions/ConfigurationAction_success.vm</result>
         <interceptor-ref name="defaultStack"/>
       </action>
 
       <action class="it.could.confluence.autoexport.actions.ConfigurationAction"
               name="configuration-delete" method="unconfigure">
-        <result name="success" type="velocity">/it/could/confluence/autoexport/templates/ConfigurationAction_success.vm</result>
+        <result name="success" type="velocity">/it/could/confluence/autoexport/actions/ConfigurationAction_success.vm</result>
         <interceptor-ref name="defaultStack"/>
       </action>
 
-      <!--+ ====================================================================
-          | Actions related to template management for the AutoExport plugin
-          + -->
+      <!-- Actions related to template management for the AutoExport plugin -->
       
       <action class="it.could.confluence.autoexport.actions.TemplateAction"
               name="template">
-        <result name="success" type="velocity">/it/could/confluence/autoexport/templates/TemplateAction_view.vm</result>
+        <result name="success" type="velocity">/it/could/confluence/autoexport/actions/TemplateAction_view.vm</result>
         <interceptor-ref name="defaultStack"/>
       </action>
       
       <action class="it.could.confluence.autoexport.actions.TemplateAction"
               name="template-view" method="read">
-        <result name="success" type="velocity">/it/could/confluence/autoexport/templates/TemplateAction_view.vm</result>
+        <result name="success" type="velocity">/it/could/confluence/autoexport/actions/TemplateAction_view.vm</result>
         <interceptor-ref name="defaultStack"/>
       </action>
 
       <action class="it.could.confluence.autoexport.actions.TemplateAction"
               name="template-edit" method="read">
-        <result name="success" type="velocity">/it/could/confluence/autoexport/templates/TemplateAction_edit.vm</result>
+        <result name="success" type="velocity">/it/could/confluence/autoexport/actions/TemplateAction_edit.vm</result>
         <interceptor-ref name="defaultStack"/>
       </action>
 
       <action class="it.could.confluence.autoexport.actions.TemplateAction"
               name="template-save" method="save">
-        <result name="success" type="velocity">/it/could/confluence/autoexport/templates/TemplateAction_view.vm</result>
+        <result name="success" type="velocity">/it/could/confluence/autoexport/actions/TemplateAction_view.vm</result>
         <interceptor-ref name="defaultStack"/>
       </action>
 
       <action class="it.could.confluence.autoexport.actions.TemplateAction"
               name="template-restore" method="restore">
-        <result name="success" type="velocity">/it/could/confluence/autoexport/templates/TemplateAction_edit.vm</result>
+        <result name="success" type="velocity">/it/could/confluence/autoexport/actions/TemplateAction_edit.vm</result>
         <interceptor-ref name="defaultStack"/>
       </action>
 
-      <!--+ ====================================================================
-          | Actions related manual spaces rebuild
-          + -->
-
+      <!-- Actions related manual spaces rebuild -->
+      
       <action class="it.could.confluence.autoexport.actions.RebuildAction" name="rebuild">
-        <result name="success" type="velocity">/it/could/confluence/autoexport/templates/RebuildAction_execute.vm</result>
+        <result name="success" type="velocity">/it/could/confluence/autoexport/actions/RebuildAction_execute.vm</result>
         <interceptor-ref name="defaultStack"/>
       </action>
       
       <action class="it.could.confluence.autoexport.actions.RebuildAction"
               name="rebuild-start" method="start">
-        <result name="success" type="velocity">/it/could/confluence/autoexport/templates/RebuildAction_start.vm</result>
+        <result name="success" type="velocity">/it/could/confluence/autoexport/actions/RebuildAction_start.vm</result>
         <interceptor-ref name="defaultStack"/>
       </action>
 
       <action class="it.could.confluence.autoexport.actions.RebuildAction"
               name="rebuild-update" method="update">
-        <result name="success" type="velocity">/it/could/confluence/autoexport/templates/RebuildAction_update.vm</result>
+        <result name="success" type="velocity">/it/could/confluence/autoexport/actions/RebuildAction_update.vm</result>
         <interceptor-ref name="defaultStack"/>
       </action>
       

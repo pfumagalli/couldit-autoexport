@@ -29,13 +29,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE *
  * POSSIBILITY OF SUCH DAMAGE.                                                *
  * ========================================================================== */
-package it.could.confluence.localization;
+package it.could.confluence;
 
 import java.text.MessageFormat;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.Vector;
@@ -45,11 +43,11 @@ import org.apache.log4j.Logger;
 /**
  * <p>A support classes dealing with localization and internationalization of
  * messages using {@link ResourceBundle}s.</p>
+ * 
+ * <p>TODO: Cache returned bundles (somehow).</p>
  */
 public final class LocalizationHelper extends ResourceBundle {
 
-    /** <p>The cache of our {@link ResourceBundle}s.</p> */
-    private static final Map CACHE = new HashMap();
     /** <p>An empty enumeration to return in {@link #getKeys()}.</p> */
     private static final Enumeration EMPTY = new Vector().elements();
 
@@ -87,9 +85,6 @@ public final class LocalizationHelper extends ResourceBundle {
         /* Try to load the package bundle as the parent of this bundle */
         try {
             this.setParent(ResourceBundle.getBundle(pRsrc, locale, loader));
-        } catch (MissingResourceException exception) {
-            String message = "Cannot load resource bundle " + cRsrc; 
-            this.log.debug(message + " (locale " + locale + ")");
         } catch (Throwable throwable) {
             if (this.log.isDebugEnabled()) {
                 String message = "Cannot load resource bundle " + pRsrc; 
@@ -101,9 +96,6 @@ public final class LocalizationHelper extends ResourceBundle {
         ResourceBundle bundle = null;
         try {
             bundle = ResourceBundle.getBundle(cRsrc, locale, loader);
-        } catch (MissingResourceException exception) {
-            String message = "Cannot load resource bundle " + cRsrc; 
-            this.log.debug(message + " (locale " + locale + ")");
         } catch (Throwable throwable) {
             if (this.log.isDebugEnabled()) {
                 String message = "Cannot load resource bundle " + cRsrc; 
@@ -120,7 +112,7 @@ public final class LocalizationHelper extends ResourceBundle {
      * Locale}.</p>
      */
     public static LocalizationHelper getBundle(Class clazz) {
-        return getBundle(clazz, null);
+        return new LocalizationHelper(clazz, Locale.getDefault());
     }
 
     /**
@@ -132,29 +124,7 @@ public final class LocalizationHelper extends ResourceBundle {
      */
     public static LocalizationHelper getBundle(Class clazz, Locale locale) {
         if (locale == null) locale = Locale.getDefault();
-
-        /* Look up in the cache for a map associated with the specified class */
-        Map byLocale = null;
-        synchronized (CACHE) {
-            byLocale = (Map) CACHE.get(clazz);
-            if (byLocale == null) {
-                byLocale = new HashMap();
-                CACHE.put(clazz, byLocale);
-            }
-        }
-
-        /* In the cache we found or we put a map, this has locales as keys */
-        LocalizationHelper helper = null;
-        synchronized (byLocale) {
-            helper = (LocalizationHelper) byLocale.get(locale);
-            if (helper == null) {
-                helper = new LocalizationHelper(clazz, locale);
-                byLocale.put(locale, helper);
-            }
-        }
-
-        /* Return the cached LocalizationHelper or the one we created */
-        return helper;
+        return new LocalizationHelper(clazz, locale);
     }
 
     /**
