@@ -1,0 +1,53 @@
+AutoExport 0.14 [current release]
+---------------------------------
+
+- Moved Change Log to Jira at <http://could.it/bugs/browse/EXP>
+
+AutoExport 0.13 [18 April 2006]
+-------------------------------
+
+- Enhancing default template to match Confluence more closely.
+- Fixing MissingResourceException in localized resources.
+- Fixing bug when pages are created/modified by Anonymous.
+- Fixing links to Confluence (my Confluence was misconfigured).
+- Beautification of generated HTML content with CyberNeko.
+
+AutoExport 0.12 [22 March 2006]
+-------------------------------
+
+- Preliminary work to export Blog posts alongside all other content.
+- Now thumbnail images link to their attachments.
+- Fixed wrong check in permissions when exporting links (never pointing to
+  Confluence, always to the exported copy, even if nothing was exported).
+- Fixed some license headers.
+
+AutoExport 0.11 [20 March 2006]
+-------------------------------
+
+- Fixed exception triggered when Confluence did not generate the thumbnail
+  of an image yet.
+- Localization bundles are now cached.
+- Improved error handling and better I18N messages in the export engine.
+- Fixed bug in export engine, not converting the URLs correctly when the export
+  was triggered by a confluence event (we must not cache User instances).
+- Improved build system to enable plugin reload straight from Ant.
+
+AutoExport 0.10 [19 March 2006]
+-------------------------------
+
+- Fixed NPE triggered when encoding is configured without root path.
+- Fixed bug triggered by the custom modifications made to Confluence to debug
+  the Velocity template caches.
+- Fixed Velocity cache issue when templates are modified.
+- Better exception handling in the ExportManager code.
+- Fixed cleanup of resources when pages are renamed and/or moved.
+- Make sure that when a page is created or changed, also all of its parents
+  are exported as well.
+- Fixed NPE related to inner links within the same page (anchor support)
+- Added this file to keep track of changes.
+
+AutoExport 0.9 [18 March 2006]
+------------------------------
+
+- Initial public release with basic export functionality working.
+

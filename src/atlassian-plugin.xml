@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ======================================================================== +
+ |   Copyright (c) 2006, Pier Paolo Fumagalli <mailto:pier@betaversion.org>   |
+ |                            All rights reserved.                            |
+ | ==========================================-=============================== |
+ |                                                                            | 
+ | Redistribution and use in source and binary forms, with or without modifi- |
+ | cation, are permitted provided that the following conditions are met:      |
+ |                                                                            | 
+ |  - Redistributions of source code must retain the  above copyright notice, |
+ |    this list of conditions and the following disclaimer.                   |
+ |                                                                            | 
+ |  - Redistributions  in binary  form  must  reproduce the  above  copyright |
+ |    notice,  this list of conditions  and the following  disclaimer  in the |
+ |    documentation and/or other materials provided with the distribution.    |
+ |                                                                            | 
+ |  - Neither the name of Pier Fumagalli, nor the names of other contributors |
+ |    may be used to endorse  or promote products derived  from this software |
+ |    without specific prior written permission.                              |
+ |                                                                            | 
+ | THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS "AS IS" |
+ | AND ANY EXPRESS OR IMPLIED WARRANTIES,  INCLUDING, BUT NOT LIMITED TO, THE |
+ | IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE |
+ | ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER  OR CONTRIBUTORS BE |
+ | LIABLE  FOR ANY  DIRECT,  INDIRECT,  INCIDENTAL,  SPECIAL,  EXEMPLARY,  OR |
+ | CONSEQUENTIAL  DAMAGES  (INCLUDING,  BUT  NOT LIMITED  TO,  PROCUREMENT OF |
+ | SUBSTITUTE GOODS OR SERVICES;  LOSS OF USE, DATA, OR PROFITS;  OR BUSINESS |
+ | INTERRUPTION)  HOWEVER CAUSED AND ON  ANY THEORY OF LIABILITY,  WHETHER IN |
+ | CONTRACT,  STRICT LIABILITY,  OR TORT  (INCLUDING NEGLIGENCE OR OTHERWISE) |
+ | ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE |
+ | POSSIBILITY OF SUCH DAMAGE.                                                |
+ + =========================================================================-->
+   
+<atlassian-plugin name="Auto Export Plugin" key="confluence.extra.autoexport">
+  
+  <!--+ ========================================================================
+      | PLUGIN DETAILS
+      | - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      | Interesting is the <description /> part of this plugin, which will be
+      | automagically displayed in the plugins configuration page. Here we can
+      | simply give out a link pointing to the custom actions that will
+      | configure the plugin itself, integrating this functionality nicely into
+      | Confluence's user interface.
+      + --> 
+  <plugin-info>
+    <description>
+      <![CDATA[
+        Automatically export all content on changes so that it can be published
+        statically using a normal web server like Apache HTTPd.<br /><br />
+        <img src="../images/icons/bullet_creme.gif" height="8" width="8" border="0" alt=""/>
+        <a href="autoexport/configuration.action">Configure plugin</a>        
+      ]]>
+    </description>
+    <vendor name="Pier Fumagalli" url="http://could.it/autoexport/"/>
+    <version>@VERSION@</version>
+  </plugin-info>
+
+  <!--+ ========================================================================
+      | COMPONENTS CONFIGURATION
+      | - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      | The configured components will be shared amongst the other instances
+      | declared below.
+      + --> 
+  <component name="AutoExport Manager" class="it.could.confluence.autoexport.AutoExportManager" key="autoExportManager">
+    <description>A component managing the different subcomponents of the AutoExport plugin.</description>
+  </component>
+
+  <!--+ ========================================================================
+      | LISTENER CONFIGURATION
+      | - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      | The configured listener will wait for events and (when appropriate)
+      | will trigger automatic export operations of the added/edited content.
+      + --> 
+  <listener name="Auto Export Listener" class="it.could.confluence.autoexport.engine.ExportListener" key="autoExportListener">
+    <description>Listens to modifications in Confluence's pages and triggers exports.</description>
+  </listener>
+
+  <!--+ ========================================================================
+      | ACTIONS CONFIGURATION
+      | - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      | The following actions build up the AutpExport plugin control-panel.
+      + --> 
+  <xwork name="Auto Export Administration" key="autoexportAction">
+    <description>Action to enable browser-based configuration of the Auto Export Plugin.</description>
+
+    <package name="autoexport" extends="default" namespace="/admin/autoexport">
+
+      <!--+ ====================================================================
+          | Actions related to configuration of the AutoExport plugin
+          + -->
+      
+      <action class="it.could.confluence.autoexport.actions.ConfigurationAction"
+              name="configuration">
+        <result name="success" type="velocity">/it/could/confluence/autoexport/templates/ConfigurationAction_success.vm</result>
+        <interceptor-ref name="defaultStack"/>
+      </action>
+
+      <action class="it.could.confluence.autoexport.actions.ConfigurationAction"
+              name="configuration-save" method="configure">
+        <result name="success" type="velocity">/it/could/confluence/autoexport/templates/ConfigurationAction_success.vm</result>
+        <interceptor-ref name="defaultStack"/>
+      </action>
+
+      <action class="it.could.confluence.autoexport.actions.ConfigurationAction"
+              name="configuration-delete" method="unconfigure">
+        <result name="success" type="velocity">/it/could/confluence/autoexport/templates/ConfigurationAction_success.vm</result>
+        <interceptor-ref name="defaultStack"/>
+      </action>
+
+      <!--+ ====================================================================
+          | Actions related to template management for the AutoExport plugin
+          + -->
+      
+      <action class="it.could.confluence.autoexport.actions.TemplateAction"
+              name="template">
+        <result name="success" type="velocity">/it/could/confluence/autoexport/templates/TemplateAction_view.vm</result>
+        <interceptor-ref name="defaultStack"/>
+      </action>
+      
+      <action class="it.could.confluence.autoexport.actions.TemplateAction"
+              name="template-view" method="read">
+        <result name="success" type="velocity">/it/could/confluence/autoexport/templates/TemplateAction_view.vm</result>
+        <interceptor-ref name="defaultStack"/>
+      </action>
+
+      <action class="it.could.confluence.autoexport.actions.TemplateAction"
+              name="template-edit" method="read">
+        <result name="success" type="velocity">/it/could/confluence/autoexport/templates/TemplateAction_edit.vm</result>
+        <interceptor-ref name="defaultStack"/>
+      </action>
+
+      <action class="it.could.confluence.autoexport.actions.TemplateAction"
+              name="template-save" method="save">
+        <result name="success" type="velocity">/it/could/confluence/autoexport/templates/TemplateAction_view.vm</result>
+        <interceptor-ref name="defaultStack"/>
+      </action>
+
+      <action class="it.could.confluence.autoexport.actions.TemplateAction"
+              name="template-restore" method="restore">
+        <result name="success" type="velocity">/it/could/confluence/autoexport/templates/TemplateAction_edit.vm</result>
+        <interceptor-ref name="defaultStack"/>
+      </action>
+
+      <!--+ ====================================================================
+          | Actions related manual spaces rebuild
+          + -->
+
+      <action class="it.could.confluence.autoexport.actions.RebuildAction" name="rebuild">
+        <result name="success" type="velocity">/it/could/confluence/autoexport/templates/RebuildAction_execute.vm</result>
+        <interceptor-ref name="defaultStack"/>
+      </action>
+      
+      <action class="it.could.confluence.autoexport.actions.RebuildAction"
+              name="rebuild-start" method="start">
+        <result name="success" type="velocity">/it/could/confluence/autoexport/templates/RebuildAction_start.vm</result>
+        <interceptor-ref name="defaultStack"/>
+      </action>
+
+      <action class="it.could.confluence.autoexport.actions.RebuildAction"
+              name="rebuild-update" method="update">
+        <result name="success" type="velocity">/it/could/confluence/autoexport/templates/RebuildAction_update.vm</result>
+        <interceptor-ref name="defaultStack"/>
+      </action>
+      
+    </package>
+  </xwork>
+
+</atlassian-plugin>

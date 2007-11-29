@@ -1,0 +1,14 @@
+# The "confluence" property must point to the directory where the
+# Confluence's web application has been expanded (the directory
+# containing the WEB-INF sub directory)
+#confluence=
+
+# The "confluence.uri" identifies the URI where confluence is
+# deployed. This is required to reload the plugin.
+#confluence.uri=http://localhost:8888/wiki/
+
+# The "confluence.user" and "confluence.pass" properties are
+# required to reload the plugin. Specify an administrator user
+# user name and password
+#confluence.user=admin
+#confluence.pass=mypass

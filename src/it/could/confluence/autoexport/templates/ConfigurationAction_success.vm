@@ -1,0 +1,180 @@
+#* ========================================================================== *
+ *   Copyright (c) 2006, Pier Paolo Fumagalli <mailto:pier@betaversion.org>   *
+ *                            All rights reserved.                            *
+ * ========================================================================== *
+ *                                                                            * 
+ * Redistribution and use in source and binary forms, with or without modifi- *
+ * cation, are permitted provided that the following conditions are met:      *
+ *                                                                            * 
+ *  - Redistributions of source code must retain the  above copyright notice, *
+ *    this list of conditions and the following disclaimer.                   *
+ *                                                                            * 
+ *  - Redistributions  in binary  form  must  reproduce the  above  copyright *
+ *    notice,  this list of conditions  and the following  disclaimer  in the *
+ *    documentation and/or other materials provided with the distribution.    *
+ *                                                                            * 
+ *  - Neither the name of Pier Fumagalli, nor the names of other contributors *
+ *    may be used to endorse  or promote products derived  from this software *
+ *    without specific prior written permission.                              *
+ *                                                                            * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS "AS IS" *
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES,  INCLUDING, BUT NOT LIMITED TO, THE *
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE *
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER  OR CONTRIBUTORS BE *
+ * LIABLE  FOR ANY  DIRECT,  INDIRECT,  INCIDENTAL,  SPECIAL,  EXEMPLARY,  OR *
+ * CONSEQUENTIAL  DAMAGES  (INCLUDING,  BUT  NOT LIMITED  TO,  PROCUREMENT OF *
+ * SUBSTITUTE GOODS OR SERVICES;  LOSS OF USE, DATA, OR PROFITS;  OR BUSINESS *
+ * INTERRUPTION)  HOWEVER CAUSED AND ON  ANY THEORY OF LIABILITY,  WHETHER IN *
+ * CONTRACT,  STRICT LIABILITY,  OR TORT  (INCLUDING NEGLIGENCE OR OTHERWISE) *
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE *
+ * POSSIBILITY OF SUCH DAMAGE.                                                *
+ * ========================================================================== *#
+<html>
+  <head>
+    <title>$action.getText("autoexport") $action.getText("title")</title>
+  </head>
+  <body>
+    #parse ("/template/includes/actionerrors.vm")
+    #parse ("/it/could/confluence/autoexport/templates/messages.vm")
+    #if ($actionMessages.size() > 0)
+      <div align="center"><a href="$action.getText('uri.config')">$action.getText('act.back')</a></div>
+    #else
+      <div align="center">
+        <table>
+          <tr>
+            <td>
+              <form action="$action.getText('uri.config-save')" method="post">
+                <table class="grid" width="100%">
+                  <thead>          
+                    <tr>
+                      <th colspan="2" style="$action.getText('style.title')">
+                        $action.getText("lbl.configure")
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    #bodytag( TextField "label='fld.rootpath'" "name='rootPath'" "value=rootPath" "size=50" )
+                      #param ("description" "fld.rootpath-desc")
+                    #end
+                    #bodytag( TextField "label='fld.username'" "name='userName'" "value=userName" "size=20")
+                      #param ("description" "fld.username-desc")
+                    #end
+                    #bodytag( Select "label='fld.encoding'" "name='encoding'" "value=encoding" "list=encodings" )
+                      #param ("description" "fld.encoding-desc")
+                    #end
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <th colspan="2" style="$action.getText('style.buttons')">
+                        <input type="submit" value="$action.getText('act.save')">
+                        <input type="reset"  value="$action.getText('act.reset')">
+                        <input type="button" value="$action.getText('act.delete')"
+                               onclick="location='$action.getText('uri.config-delete')'">
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </form>
+            </td>
+          </tr>
+          #if ($actionErrors.size() == 0)
+            <tr>
+              <td>
+                <form action="$action.getText('uri.rebuild')" method="post">
+                  <table class="grid" width="100%">
+                    <thead>          
+                      <tr>
+                        <th colspan="2" style="$action.getText('style.title')">
+                          $action.getText("lbl.rebuild")
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      #bodytag( Select "label='fld.spaces'" "name='spaces'" "list=spaces" "listKey=key" "listValue=name" )
+                        #param ("multiple"    "true")
+                        #param ("headerKey"   "*")
+                        #param ("headerValue" "$action.getText('fld.spaces-all')")
+                        #param ("description" "fld.spaces-desc")
+                      #end
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <th colspan="2" style="$action.getText('style.buttons')">
+                          <input type="submit" value="$action.getText('act.export')">
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </form>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <table class="grid" width="100%">
+                  <thead>          
+                    <tr>
+                      <th colspan="2" style="$action.getText('style.title')">
+                        $action.getText("lbl.templates")
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td nowrap align="right" valign="top">
+                        <label class="label">$action.getText('lbl.allspaces'):</label>
+                      </td>
+                      <td>
+                        #if ($action.hasCustomTemplate(null))
+                          <a href="$action.getText('uri.template-edit')"   >$action.getText("act.templates.edit")</a> |
+                          <a href="$action.getText('uri.template-restore')">$action.getText("act.templates.restore")</a> |
+                          <a href="$action.getText('uri.template-view')"   >$action.getText("act.templates.current")</a> |
+                          <a href="$action.getText('uri.template')"        >$action.getText("act.templates.default")</a>
+                        #else
+                          <a href="$action.getText('uri.template-edit')"   >$action.getText("act.templates.edit")</a> |
+                                                                            $action.getText("act.templates.restore") |
+                                                                            $action.getText("act.templates.current") |
+                          <a href="$action.getText('uri.template')"        >$action.getText("act.templates.default")</a>
+                        #end
+                      </td>
+                    </tr>
+                    #set ($spaces = $action.getSpaces())
+                    #if ($spaces)
+                      #foreach ($space in $spaces)
+                        #set ($spaceName = $space.getName())
+                        #set ($spaceKey  = $space.getKey())
+                        <tr>
+                          <td nowrap align="right" valign="top">
+                            <label class="label">$action.getText('lbl.namedspace',[$spaceName]):</label>
+                          </td>
+                          <td>
+                            #if ($action.hasCustomTemplate($space.getKey()))
+                              <a href="$action.getText('uri.template-edit')?space=$spaceKey"   >$action.getText("act.templates.edit")</a> |
+                              <a href="$action.getText('uri.template-restore')?space=$spaceKey">$action.getText("act.templates.restore")</a> |
+                              <a href="$action.getText('uri.template-view')?space=$spaceKey"   >$action.getText("act.templates.current")</a>
+                            #else
+                              <a href="$action.getText('uri.template-edit')?space=$spaceKey"   >$action.getText("act.templates.edit")</a> |
+                                                                                                $action.getText("act.templates.restore") |
+                                                                                                $action.getText("act.templates.current")
+                            #end
+                          </td>
+                        </tr>
+                      #end
+                    #end
+                    <tr>
+                      <td colspan="2" align="center">
+                        <div class="smallfont">
+                          $action.getText("lbl.templates-desc")
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          #end
+        </table>
+      </div>
+    #end
+    #parse ("/it/could/confluence/autoexport/templates/breadcrumbs.vm")
+  </body>
+</html>
