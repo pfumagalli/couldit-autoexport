@@ -87,9 +87,6 @@ public final class LocalizationHelper extends ResourceBundle {
         /* Try to load the package bundle as the parent of this bundle */
         try {
             this.setParent(ResourceBundle.getBundle(pRsrc, locale, loader));
-        } catch (MissingResourceException exception) {
-            String message = "Cannot load resource bundle " + cRsrc; 
-            this.log.debug(message + " (locale " + locale + ")");
         } catch (Throwable throwable) {
             if (this.log.isDebugEnabled()) {
                 String message = "Cannot load resource bundle " + pRsrc; 
@@ -101,9 +98,6 @@ public final class LocalizationHelper extends ResourceBundle {
         ResourceBundle bundle = null;
         try {
             bundle = ResourceBundle.getBundle(cRsrc, locale, loader);
-        } catch (MissingResourceException exception) {
-            String message = "Cannot load resource bundle " + cRsrc; 
-            this.log.debug(message + " (locale " + locale + ")");
         } catch (Throwable throwable) {
             if (this.log.isDebugEnabled()) {
                 String message = "Cannot load resource bundle " + cRsrc; 

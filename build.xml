@@ -3,21 +3,21 @@
  |   Copyright (c) 2006, Pier Paolo Fumagalli <mailto:pier@betaversion.org>   |
  |                            All rights reserved.                            |
  | ==========================================-=============================== |
- |                                                                            | 
+ |                                                                            |
  | Redistribution and use in source and binary forms, with or without modifi- |
  | cation, are permitted provided that the following conditions are met:      |
- |                                                                            | 
+ |                                                                            |
  |  - Redistributions of source code must retain the  above copyright notice, |
  |    this list of conditions and the following disclaimer.                   |
- |                                                                            | 
+ |                                                                            |
  |  - Redistributions  in binary  form  must  reproduce the  above  copyright |
  |    notice,  this list of conditions  and the following  disclaimer  in the |
  |    documentation and/or other materials provided with the distribution.    |
- |                                                                            | 
+ |                                                                            |
  |  - Neither the name of Pier Fumagalli, nor the names of other contributors |
  |    may be used to endorse  or promote products derived  from this software |
  |    without specific prior written permission.                              |
- |                                                                            | 
+ |                                                                            |
  | THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS "AS IS" |
  | AND ANY EXPRESS OR IMPLIED WARRANTIES,  INCLUDING, BUT NOT LIMITED TO, THE |
  | IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE |
@@ -33,8 +33,8 @@
 
 <project name="Confluence AutoExport Plugin" default="all" basedir=".">
 
-  <property name="version"  value="0.15-dev"/>
-  
+  <property name="version"  value="0.14.1-dev"/>
+
   <property name="dir.source"     value="${basedir}/src"/>
   <property name="dir.build"      value="${basedir}/build"/>
   <property name="dir.apidoc"     value="${basedir}/api"/>
@@ -58,7 +58,7 @@
     <echo message="expanded the Confluence 2.1.x web application."/>
     <fail message="web-app directory not specified"/>
   </target>
-  
+
   <!-- Check the "confluence" property and prepare "canreload" -->
   <target name="checkreload" depends="cancompile">
     <property file="${confluence}/WEB-INF/classes/confluence-init.properties"/>
@@ -83,7 +83,7 @@
     <echo message="specifying '-Dproperty=value'"/>
     <fail message="Missing parameters"/>
   </target>
-  
+
   <!-- ======================================================================= +
    | Compilation and archival tasks                                            |
    + ======================================================================= -->
@@ -93,7 +93,7 @@
           description="  Creates the temporary build directory">
     <mkdir dir="${dir.build}"/>
   </target>
-  
+
   <!-- Compile the sources and copy all resources -->
   <target name="compile" depends="prepare"
           description="  Compile the sources">
@@ -161,9 +161,9 @@
     </copy>
   </target>
 
-  <!-- Build everything excluding the distribution ZIP --> 
+  <!-- Build everything excluding the distribution ZIP -->
   <target name="all" depends="jar,api" description="* Create all targets"/>
-  
+
   <!-- Build the distribution ZIP file -->
   <target name="clean" description="  Clean up all targets used by the build">
     <delete dir="${dir.build}"/>
@@ -176,33 +176,16 @@
   <!-- ======================================================================= +
    | Automatically reload plugin within confluence                             |
    + ======================================================================= -->
-  
-  <target name="install" depends="checkreload,canreload,jar"
-          description="  Install the plugin in confluence">
+
+  <target name="reload" depends="checkreload,canreload,jar"
+          description="  Rebuild and reload in confluence">
     <property name="login" value="&amp;os_username=${confluence.user}&amp;os_password=${confluence.pass}"/>
     <property name="baseuri" value="${confluence.uri}admin/plugins.action"/>
-    <mkdir dir="${confluence.home}/plugin-cache"/>
-    <copy todir="${confluence.home}/plugin-cache" file="autoexport-${version}.jar"/>
+    <get dest="temp-reload.out" src="${baseuri}?mode=uninstall&amp;pluginKey=confluence.extra.autoexport${login}"/>
+    <copy todir="${confluence.home}/plugins" file="autoexport-${version}.jar"/>
     <get dest="temp-reload.out" src="${baseuri}?mode=rescan${login}"/>
     <delete file="temp-reload.out"/>
   </target>
-  
-  <target name="reload" depends="checkreload,canreload,jar"
-          description="  Rebuild and reload in confluence">
-    <property name="login" value="os_username=${confluence.user}&amp;os_password=${confluence.pass}"/>
-    <property name="uninst" value="mode=uninstall&amp;pluginKey=confluence.extra.autoexport"/>
-    <echo message="Uninstalling old plugin version..."/>
-    <exec executable="curl" output="/dev/null" error="/dev/null">
-      <arg value="${confluence.uri}admin/plugins.action?${login}&amp;${uninst}"/>
-    </exec>
-    <echo message="Uploading new plugin jar file..."/>
-    <exec executable="curl" output="/dev/null" error="/dev/null">
-      <arg value="-F"/>
-      <arg value="file_0=@autoexport-${version}.jar"/>
-      <arg value="${confluence.uri}admin/uploadplugin.action?${login}"/>
-    </exec>
-    <echo message="Confluence reloaded."/>
-  </target>
-  
+
 
 </project>
