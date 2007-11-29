@@ -1,4 +1,4 @@
-#* ========================================================================== *
+/* ========================================================================== *
  *   Copyright (c) 2006, Pier Paolo Fumagalli <mailto:pier@betaversion.org>   *
  *                            All rights reserved.                            *
  * ========================================================================== *
@@ -28,39 +28,38 @@
  * CONTRACT,  STRICT LIABILITY,  OR TORT  (INCLUDING NEGLIGENCE OR OTHERWISE) *
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE *
  * POSSIBILITY OF SUCH DAMAGE.                                                *
- * ========================================================================== *#
-<html>
-  <head>
-    <title>$action.getText("autoexport") $action.getText("title")</title>
-  </head>
-  <body>
-    #parse ("/template/includes/actionerrors.vm")
-    #parse ("/it/could/confluence/autoexport/templates/messages.vm")
-    #if ($actionErrors.size() == 0)
-      <table class="grid" width="100%">
-        <thead>          
-          <tr>
-            <th style="$action.getText('style.title')">
-              #if ($action.getSpace() == '')
-                $action.getText('lbl.allspaces')
-              #else
-                $action.getText('lbl.namedspace',[$action.getSpaceName()])
-              #end
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td><pre style="$action.getText('style.preformatted')">$action.data</pre></td></tr>
-        </tbody>
-        <tfoot>
-           <tr>
-            <th style="$action.getText('style.buttons')">
-              <input type="button" value="$action.getText('act.back')" onclick="location='$action.getText('uri.config')'">
-            </td>
-          </tr>
-        </tfoot>
-      </table>
-    #end
-    #parse ("/it/could/confluence/autoexport/templates/breadcrumbs.vm")
-  </body>
-</html>
+ * ========================================================================== */
+package it.could.confluence;
+
+/**
+ * <p>The {@link LocalizedException} represent an exception which can be
+ * constructed obtaining messages either from a {@link LocalizedResource} or
+ * from a {@link LocalizationHelper} instance.</p>
+ */
+public class LocalizedException extends Exception {
+
+    public LocalizedException(LocalizedResource resource, String key) {
+        this(resource, key, (Throwable) null);
+    }
+
+    public LocalizedException(LocalizedResource resource, String key, Object argument) {
+        this(resource, key, new Object[] { argument }, (Throwable) null);
+    }
+
+    public LocalizedException(LocalizedResource resource, String key, Object arguments[]) {
+        this(resource, key, arguments, (Throwable) null);
+    }
+
+    public LocalizedException(LocalizedResource resource, String key, Object argument, Throwable cause) {
+        this(resource, key, new Object[] { argument }, cause);
+    }
+
+    public LocalizedException(LocalizedResource resource, String key, Throwable cause) {
+        super(resource.localizeMessage(key), cause);
+    }
+
+    public LocalizedException(LocalizedResource resource, String key, Object arguments[], Throwable cause) {
+        super(resource.localizeMessage(key, arguments), cause);
+    }
+
+}

@@ -31,21 +31,20 @@
  * ========================================================================== */
 package it.could.confluence.autoexport;
 
-import it.could.confluence.localization.LocalizedComponent;
-import it.could.confluence.localization.LocalizedException;
+import it.could.confluence.ComponentSupport;
+import it.could.confluence.LocalizedException;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.atlassian.config.ApplicationConfig;
-import com.atlassian.config.ConfigurationException;
-import com.atlassian.config.bootstrap.AtlassianBootstrapManager;
-import com.atlassian.confluence.setup.settings.SettingsManager;
+import bucket.config.ConfigurationException;
+import bucket.container.ContainerManager;
+
+import com.atlassian.confluence.setup.BootstrapManager;
+import com.atlassian.confluence.setup.ConfluenceApplicationConfig;
 import com.atlassian.confluence.spaces.Space;
 import com.atlassian.confluence.spaces.SpaceManager;
 import com.atlassian.user.EntityException;
@@ -57,8 +56,10 @@ import com.atlassian.user.UserManager;
  * configuration and gives access to the configurations required by the
  * AutoExport plugin.</p>
  */
-public class ConfigurationManager extends LocalizedComponent {
+public class ConfigurationManager extends ComponentSupport {
 
+    /** <p>The singleton instance of this {@link ConfigurationManager}.</p> */
+    public static final ConfigurationManager INSTANCE = new ConfigurationManager();
     /** <p>The prefix associated with our configuration properties.</p> */
     public static final String PREFIX = "autoexport.";
     /** <p>The name of the property identifying the status of the config.</p> */
@@ -69,44 +70,31 @@ public class ConfigurationManager extends LocalizedComponent {
     public static final String ROOT_PATH = PREFIX + "rootPath";
     /** <p>The name of the property identifying the export user name.</p> */
     public static final String USER_NAME = PREFIX + "userName";
+    /** <p>The name of the property identifying the home (index) space.</p> */
+    public static final String HOME_SPACE = PREFIX + "homeSpace";
 
     /** <p>The {@link UserManager} used to validate users.</p> */
-    private final UserManager userManager;
+    private UserManager userManager = null;
     /** <p>The {@link SpaceManager} used to validate spaces.</p> */
-    private final SpaceManager spaceManager;
-    /** <p>The {@link AtlassianBootstrapManager} accessing core application properties.</p> */
-    private final AtlassianBootstrapManager bootstrapManager;
-    /** <p>The {@link SettingsManager} accessing core application settings.</p> */
-    private final SettingsManager settingsManager;
+    private SpaceManager spaceManager = null;
+    /** <p>The {@link BootstrapManager} used to locate Confluence's home.</p> */
+    private BootstrapManager bootstrapManager = null;
     /** <p>The {@link ConfluenceApplicationConfig} for configurations.</p> */
-    private final ApplicationConfig applicationConfig;
-
+    private ConfluenceApplicationConfig applicationConfig = null;
     /** <p>The currently configured export encoding.</p> */
     private String encoding = null;
     /** <p>The currently configured root path.</p> */
     private String rootPath = null;
     /** <p>The currently configured user name.</p> */
     private String userName = null;
+    /** <p>The currently configured home space.</p> */
+    private String homeSpace = null;
 
-    /** <p>Create a new {@link ConfigurationManager} instance.</p> */
-    ConfigurationManager(UserManager userManager,
-                         SpaceManager spaceManager,
-                         AtlassianBootstrapManager bootstrapManager,
-                         SettingsManager settingsManager,
-                         ApplicationConfig applicationConfig) {
-
-        this.userManager = userManager;
-        this.spaceManager = spaceManager;
-        this.bootstrapManager = bootstrapManager;
-        this.settingsManager = settingsManager;
-        this.applicationConfig = applicationConfig;
+    /** <p>Deny public construction.</p> */
+    private ConfigurationManager() {
+        ContainerManager.autowireComponent(this);
         this.reload();
-        this.log.info("Instance created");
     }
-
-    /* ====================================================================== */
-    /* GENERIC CONFIGURATION METHODS                                          */
-    /* ====================================================================== */
 
     /**
      * <p>Reload the configuration from Confluence's backend.</p>
@@ -115,7 +103,12 @@ public class ConfigurationManager extends LocalizedComponent {
         this.encoding = (String) this.applicationConfig.getProperty(ENCODING);
         this.rootPath = (String) this.applicationConfig.getProperty(ROOT_PATH);
         this.userName = (String) this.applicationConfig.getProperty(USER_NAME);
+        this.homeSpace = (String) this.applicationConfig.getProperty(HOME_SPACE);
     }
+
+    /* ====================================================================== */
+    /* GENERIC CONFIGURATION METHODS                                          */
+    /* ====================================================================== */
 
     /**
      * <p>Save all modifications made to this instance onto the configuration
@@ -132,6 +125,9 @@ public class ConfigurationManager extends LocalizedComponent {
 
         if (this.userName == null) this.applicationConfig.removeProperty(USER_NAME);
         else this.applicationConfig.setProperty(USER_NAME, this.userName);
+        
+        if (this.homeSpace == null) this.applicationConfig.removeProperty(HOME_SPACE);
+        else this.applicationConfig.setProperty(HOME_SPACE, this.homeSpace);
         
         this.applicationConfig.setProperty(CONFIGURED, true);
 
@@ -179,10 +175,43 @@ public class ConfigurationManager extends LocalizedComponent {
             this.validateEncoding(this.getEncoding());
             this.validateRootPath(this.getRootPath());
             this.validateUserName(this.getUserName());
+            this.validateHomeSpace(this.getHomeSpace());
             return true;
         } else {
             return false;
         }
+    }
+
+    /* ====================================================================== */
+    /* BEAN SETTER METHODS FOR SPRING AUTO-WIRING                             */
+    /* ====================================================================== */
+
+    /**
+     * <p>Setter for Spring's component wiring.</p>
+     */
+    public void setSpaceManager(SpaceManager spaceManager) {
+        this.spaceManager = spaceManager;
+    }
+
+    /**
+     * <p>Setter for Spring's component wiring.</p>
+     */
+    public void setUserManager(UserManager userManager) {
+        this.userManager = userManager;
+    }
+
+    /**
+     * <p>Setter for Spring's component owiring.</p>
+     */
+    public void setBootstrapManager(BootstrapManager bootstrapManager) {
+        this.bootstrapManager = bootstrapManager;
+    }
+    
+    /**
+     * <p>Setter for Spring's component owiring.</p>
+     */
+    public void setApplicationConfig(ConfluenceApplicationConfig config) {
+        this.applicationConfig = config;
     }
 
     /* ====================================================================== */
@@ -193,8 +222,7 @@ public class ConfigurationManager extends LocalizedComponent {
      * <p>Return the configured export encoding.</p> 
      */
     public String getEncoding() {
-        return this.encoding != null ? this.encoding :
-               new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding();
+        return this.encoding == null ? "UTF-8" : this.encoding;
     }
 
     /**
@@ -235,30 +263,28 @@ public class ConfigurationManager extends LocalizedComponent {
     }
 
     /**
+     * <p>Return the configured space representing the home page of the
+     * exported site.</p> 
+     */
+    public String getHomeSpace() {
+        return this.homeSpace;
+    }
+
+    /**
+     * <p>Set the space representing the home page of the exported site in
+     * the configuration.</p> 
+     */
+    public void setHomeSpace(String homeSpace) {
+        this.homeSpace = homeSpace;
+    }
+
+    /**
      * <p>Return the extension used for the auto-exported files.</p>
      * 
      * <p>TODO: Make this a configurable item.</p> 
      */
     public String getExtension() {
         return ".html";
-    }
-
-    /**
-     * <p>Return the base URL of Confluence's deployment.</p>
-     * 
-     * <p>TODO: Make this a configurable item.</p> 
-     */
-    public String getConfluenceUrl() {
-        return this.settingsManager.getGlobalSettings().getBaseUrl();
-    }
-
-    /**
-     * <p>Return the home directory of Confluence's deployment.</p>
-     * 
-     * <p>TODO: Make this a configurable item.</p> 
-     */
-    public String getConfluenceHome() {
-        return this.bootstrapManager.getApplicationHome();
     }
 
     /* ====================================================================== */
@@ -271,7 +297,7 @@ public class ConfigurationManager extends LocalizedComponent {
     public String validateEncoding(String encoding)
     throws LocalizedException {
         try {
-            "test".getBytes(encoding);
+            rootPath.getBytes(encoding);
             return encoding;
         } catch (UnsupportedEncodingException exception) {
             throw new LocalizedException(this, "encoding.invalid", encoding, exception);
@@ -294,7 +320,7 @@ public class ConfigurationManager extends LocalizedComponent {
         /* Convert the root path into a file relative to Confluence's home */
         File rootFile = new File(rootPath);
         if (! rootFile.isAbsolute()) {
-            String home = this.bootstrapManager.getConfiguredApplicationHome();
+            String home = this.bootstrapManager.getConfiguredConfluenceHome();
             rootFile = new File(home, rootPath);
         }
 

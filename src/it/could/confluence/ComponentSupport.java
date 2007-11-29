@@ -29,17 +29,17 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE *
  * POSSIBILITY OF SUCH DAMAGE.                                                *
  * ========================================================================== */
-package it.could.confluence.localization;
+package it.could.confluence;
 
 import java.util.Locale;
 
 import org.apache.log4j.Logger;
 
 /**
- * <p>The {@link LocalizedComponent} abstract class represents a generic
+ * <p>The {@link ComponentSupport} abstract class represents a generic
  * component providing extended localization functionality.</p>
  */
-public abstract class LocalizedComponent implements LocalizedResource {
+public abstract class ComponentSupport implements LocalizedResource {
     
     /** <p>The Log4J {@link Logger} used by this instance.</p> */ 
     protected final Logger log = Logger.getLogger(this.getClass());
@@ -48,16 +48,16 @@ public abstract class LocalizedComponent implements LocalizedResource {
     private final LocalizationHelper bundle;
 
     /**
-     * <p>Create a new {@link LocalizedComponent} instance.</p>
+     * <p>Create a new {@link ComponentSupport} instance.</p>
      */
-    protected LocalizedComponent() {
+    protected ComponentSupport() {
         this(Locale.getDefault());
     }
 
     /**
-     * <p>Create a new {@link LocalizedComponent} instance.</p>
+     * <p>Create a new {@link ComponentSupport} instance.</p>
      */
-    protected LocalizedComponent(Locale locale) {
+    protected ComponentSupport(Locale locale) {
         if (locale == null) locale = Locale.getDefault();
         this.bundle = LocalizationHelper.getBundle(this.getClass(), locale);
     }
@@ -67,23 +67,18 @@ public abstract class LocalizedComponent implements LocalizedResource {
      * specified key or the default value if the key was not found.</p>
      */
     public String localizeMessage(String key) {
-        try {
-            return this.bundle.getString(key);
-        } catch (Exception exception) {
-            return key;
-        }
+        return this.bundle.getString(key);
     }
 
     /**
      * <p>Format the message identified by the specified format key according
      * to the specified array of arguments.</p>
+     * 
+     * <p>If the format key was not found, then the default format specified
+     * will be used to format the returned message.</p>
      */
     public String localizeMessage(String key, Object arguments[]) {
-        try {
-            return this.bundle.formatString(key, arguments);
-        } catch (Exception exception) {
-            return key;
-        }
+        return this.bundle.formatString(key, arguments);
     }
 
 }

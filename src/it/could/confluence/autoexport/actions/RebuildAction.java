@@ -31,34 +31,32 @@
  * ========================================================================== */
 package it.could.confluence.autoexport.actions;
 
-import it.could.confluence.autoexport.AutoExportManager;
-import it.could.confluence.autoexport.ExportManager;
+import it.could.confluence.ActionSupport;
+import it.could.confluence.autoexport.engine.ExportEngine;
 import it.could.confluence.autoexport.engine.Notifiable;
-import it.could.confluence.localization.LocalizedAction;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import bucket.container.ContainerManager;
 
 import com.atlassian.confluence.core.Administrative;
 import com.atlassian.confluence.spaces.Space;
 import com.atlassian.confluence.spaces.SpaceManager;
-import com.atlassian.confluence.spaces.SpaceType;
 
 /**
  * <p>An action dealing with manual export operations with the AutoExport
  * plugin.</p>
  */
-public class RebuildAction extends LocalizedAction implements Administrative {
+public class RebuildAction extends ActionSupport implements Administrative {
 
     /** <p>The singleton {@link Task} instance (only one running).</p> */
     private static Task TASK_INSTANCE = null;
 
-    /** <p>The {@link ExportManager} used to export spaces.</p> */
-    private ExportManager exportManager = null;
     /** <p>The {@link SpaceManager} used to validate spaces.</p> */
     private SpaceManager spaceManager = null;
     /** <p>The current {@link Task} instance.</p> */
@@ -72,7 +70,7 @@ public class RebuildAction extends LocalizedAction implements Administrative {
      * <p>Create a new {@link RebuildAction} instance.</p>
      */
     public RebuildAction() {
-        this.log.info("Instance created");
+        ContainerManager.autowireComponent(this);
     }
 
     /* ====================================================================== */
@@ -83,15 +81,7 @@ public class RebuildAction extends LocalizedAction implements Administrative {
      * <p>Setter for Spring's component wiring.</p>
      */
     public void setSpaceManager(SpaceManager spaceManager) {
-        this.log.debug("SpaceManager instance set");
         this.spaceManager = spaceManager;
-    }
-
-    /**
-     * <p>Setter for Spring's component owiring.</p>
-     */
-    public void setAutoExportManager(AutoExportManager autoExportManager) {
-        this.exportManager = autoExportManager.getExportManager();
     }
 
     /* ====================================================================== */
@@ -103,34 +93,6 @@ public class RebuildAction extends LocalizedAction implements Administrative {
      * instance and running it.</p>
      */
     public String execute() {
-        /* Process and normalize the list of spaces */
-        final List list = new ArrayList();
-        for (int x = 0; x < spaces.length; x++) {
-            if ("*".equals(spaces[x])) {
-                list.addAll(this.spaceManager.getSpacesByType(SpaceType.GLOBAL));
-                list.addAll(this.spaceManager.getSpacesByType(SpaceType.PERSONAL));
-                break;
-            } else try {
-                Space space = this.spaceManager.getSpace(spaces[x]);
-                if (space == null) continue;
-                if (list.contains(space)) continue;
-                list.add(space);
-            } catch (Exception exception) {
-                this.log.warn("Can't resolve space " + spaces[x], exception);
-            }
-        }
-
-        if (list.size() != 0) {
-            final String spaceKeys[] = new String[list.size()];
-            final Iterator iterator = list.iterator();
-            for (int x = 0; iterator.hasNext(); x ++) {
-                spaceKeys[x] = ((Space)iterator.next()).getKey();
-            }
-
-            this.spaces = spaceKeys;
-        }
-
-        
         /* What to do if we already have an executor in the session? */
         if (this.executor != null) {
             /* If the executor is running, just fail */
@@ -153,13 +115,7 @@ public class RebuildAction extends LocalizedAction implements Administrative {
         /* Finally, we now have no executor and a list of spaces */
         } else {
             this.addActionMessage(this.getText("msg.started"));
-            final String names[] = new String[this.spaces.length];
-            for (int x = 0; x < names.length; x++) {
-                final Space space = this.spaceManager.getSpace(this.spaces[x]);
-                if (space != null) names[x] = space.getName();
-            }
-            TASK_INSTANCE = this.executor = new Task(this.spaces, names,
-                                                     this.exportManager);
+            TASK_INSTANCE = this.executor = new Task(this.spaces);
             this.executor.getCurrentLog();
         }
 
@@ -204,7 +160,30 @@ public class RebuildAction extends LocalizedAction implements Administrative {
      * <p>Parameter value setter.</p>
      */
     public void setSpaces(String spaces[]) {
-        this.spaces = spaces;
+        List list = new ArrayList();
+        for (int x = 0; x < spaces.length; x++) {
+            if ("*".equals(spaces[x])) {
+                list = this.spaceManager.getSpaces();
+                break;
+            } else try {
+                Space space = this.spaceManager.getSpace(spaces[x]);
+                if (space == null) continue;
+                if (list.contains(space)) continue;
+                list.add(space);
+            } catch (Exception exception) {
+                this.log.warn("Can't resolve space " + spaces[x], exception);
+            }
+        }
+
+        if (list.size() != 0) {
+            final String spaceKeys[] = new String[list.size()];
+            final Iterator iterator = list.iterator();
+            for (int x = 0; iterator.hasNext(); x ++) {
+                spaceKeys[x] = ((Space)iterator.next()).getKey();
+            }
+
+            this.spaces = spaceKeys;
+        }
     }
 
     /* ====================================================================== */
@@ -241,34 +220,24 @@ public class RebuildAction extends LocalizedAction implements Administrative {
      * {@link RebuildAction} to export {@link Space}s in background.</p>
      */
     public static final class Task implements Runnable, Notifiable {
-        /** <p>The {@link Logger} of the class specified at construction.</p> */
-        private final Logger log = Logger.getLogger(Task.class);
-        /** <p>The {@link ExportManager} used to export spaces.</p> */
-        private final ExportManager exportManager;
         /** <p>The full log of this task.</p> */
         private final StringBuffer previousLog = new StringBuffer();
         /** <p>The data added to the full log.</p> */
         private final StringBuffer currentLog = new StringBuffer();
-        /** <p>The list of {@link Space}s to export.</p> */
-        private final String spaceKeys[];
-        /** <p>The names of the {@link Space}s to export.</p> */
-        private final String spaceNames[];
         /** <p>A flag indicating whether this task is running or not.</p> */
         private boolean started = false;
         /** <p>A flag indicating whether this task is running or not.</p> */
         private boolean running = true;
+        /** <p>The list of {@link Space}s to export.</p> */
+        private String spaceKeys[] = null;
         
         /**
          * <p>Create a new {@link Task} instance.</p>
          */
-        private Task(String spaceKeys[], String spaceNames[],
-                     ExportManager exportManager) {
+        private Task(String spaceKeys[]) {
             this.notify("Starting export task for the following spaces:");
             this.spaceKeys = spaceKeys;
-            this.spaceNames = spaceNames;
-            this.exportManager = exportManager;
-
-            /* TODO: This will throw a Hibernate Exception */
+            /* This will throw a Hibernate Exception */
             //new Thread(new ThreadGroup("wa"), this, "wa").start();
         }
 
@@ -282,14 +251,15 @@ public class RebuildAction extends LocalizedAction implements Administrative {
                 this.currentLog.append(new Date());
                 this.currentLog.append("] ");
                 if (object instanceof Throwable) {
-                    this.currentLog.append("*** EXCEPTION *** ");
-                    this.currentLog.append(object.getClass().getName());
-                    this.currentLog.append(": ");
-                    this.currentLog.append(((Throwable)object).getMessage());
-                    this.log.warn("Exporting: Exception", (Throwable) object);
+                    final StringWriter writer = new StringWriter();
+                    final PrintWriter printer = new PrintWriter(writer);
+                    ((Throwable) object).printStackTrace(printer);
+                    printer.flush();
+                    printer.close();
+                    writer.flush();
+                    this.currentLog.append(writer.getBuffer());
                 } else {
-                    this.currentLog.append("Exporting: " + object.toString());
-                    this.log.info(object);
+                    this.currentLog.append(object.toString());
                 }
                 this.currentLog.append('\n');
             }
@@ -302,10 +272,11 @@ public class RebuildAction extends LocalizedAction implements Administrative {
             this.started = true;
             try {
                 for (int x = 0; x < this.spaceKeys.length; x ++) {
-                    this.notify(" - " + this.spaceNames[x] +  " [key=" +
-                                this.spaceKeys[x] + "]");
+                    this.notify(" - " + this.spaceKeys[x]);
                 }
-                this.exportManager.export(this.spaceKeys, this, true);
+
+                ExportEngine exporter = new ExportEngine();
+                exporter.export(this.spaceKeys, this, true);
 
             } catch (Throwable throwable) {
                 this.notify(throwable);

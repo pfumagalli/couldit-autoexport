@@ -35,7 +35,7 @@
   </head>
   <body>
     #parse ("/template/includes/actionerrors.vm")
-    #parse ("/it/could/confluence/autoexport/templates/messages.vm")
+    #parse ("/it/could/confluence/autoexport/actions/messages.vm")
     #if ($actionMessages.size() > 0)
       <div align="center"><a href="$action.getText('uri.config')">$action.getText('act.back')</a></div>
     #else
@@ -61,6 +61,10 @@
                     #end
                     #bodytag( Select "label='fld.encoding'" "name='encoding'" "value=encoding" "list=encodings" )
                       #param ("description" "fld.encoding-desc")
+                    #end
+                    #bodytag( Select "label='fld.homespace'" "name='homeSpace'" "value=homeSpace" "list=spaces" "listKey=key" "listValue=name" )
+                      #param ("description" "fld.homespace-desc")
+                      #param ("emptyOption" "true")
                     #end
                   </tbody>
                   <tfoot>
@@ -175,6 +179,6 @@
         </table>
       </div>
     #end
-    #parse ("/it/could/confluence/autoexport/templates/breadcrumbs.vm")
+    #parse ("/it/could/confluence/autoexport/actions/breadcrumbs.vm")
   </body>
 </html>
