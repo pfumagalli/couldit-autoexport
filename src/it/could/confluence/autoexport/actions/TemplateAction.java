@@ -31,12 +31,13 @@
  * ========================================================================== */
 package it.could.confluence.autoexport.actions;
 
-import it.could.confluence.autoexport.AutoExportManager;
+import it.could.confluence.ActionSupport;
+import it.could.confluence.LocalizedException;
 import it.could.confluence.autoexport.TemplatesManager;
-import it.could.confluence.localization.LocalizedAction;
-import it.could.confluence.localization.LocalizedException;
 
 import java.io.IOException;
+
+import bucket.container.ContainerManager;
 
 import com.atlassian.confluence.core.Administrative;
 import com.atlassian.confluence.spaces.SpaceManager;
@@ -44,11 +45,11 @@ import com.atlassian.confluence.spaces.SpaceManager;
 /**
  * <p>An action managing the templates used by the AutoExport plugin.</p>
  */
-public class TemplateAction extends LocalizedAction
+public class TemplateAction extends ActionSupport
 implements Administrative {
 
-    /** <p>The {@link TemplatesManager} used to validate spaces.</p> */
-    private TemplatesManager templatesManager = null;
+    /** <p>The {@link TemplatesManager} managing AutoExport templates.</p> */
+    private final TemplatesManager templatesManager = TemplatesManager.INSTANCE;
     /** <p>The {@link SpaceManager} used to validate spaces.</p> */
     private SpaceManager spaceManager = null;
     /** <p>The current space key or <b>null</b> for all spaces.</p> */
@@ -60,19 +61,12 @@ implements Administrative {
      * <p>Create a new {@link TemplateAction} instance.</p>
      */
     public TemplateAction() {
-        this.log.info("Instance created");
+        ContainerManager.autowireComponent(this);
     }
 
     /* ====================================================================== */
     /* BEAN SETTER METHODS FOR SPRING AUTO-WIRING                             */
     /* ====================================================================== */
-
-    /**
-     * <p>Setter for Spring's component owiring.</p>
-     */
-    public void setAutoExportManager(AutoExportManager autoExportManager) {
-        this.templatesManager = autoExportManager.getTemplatesManager();
-    }
 
     /**
      * <p>Setter for Spring's component wiring.</p>

@@ -31,9 +31,8 @@
  * ========================================================================== */
 package it.could.confluence.autoexport;
 
-import it.could.confluence.autoexport.templates.TemplatesAware;
-import it.could.confluence.localization.LocalizedComponent;
-import it.could.confluence.localization.LocalizedException;
+import it.could.confluence.ComponentSupport;
+import it.could.confluence.LocalizedException;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -49,6 +48,9 @@ import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.exception.ParseErrorException;
 import org.apache.velocity.exception.ResourceNotFoundException;
 
+import bucket.container.ContainerManager;
+
+import com.atlassian.confluence.setup.BootstrapManager;
 import com.atlassian.confluence.util.ConfluenceVelocityResourceCache;
 import com.opensymphony.webwork.views.velocity.VelocityManager;
 
@@ -56,19 +58,21 @@ import com.opensymphony.webwork.views.velocity.VelocityManager;
  * <p>The {@link TemplatesManager} provides a single access point for all
  * Velocity templates operations tied to the AutoExport plugin.</p>
  */
-public class TemplatesManager extends LocalizedComponent
-implements TemplatesAware {
-
+public class TemplatesManager extends ComponentSupport {
+    
+    /** <p>The name (full Java package) of the default template.</p> */
+    public static final String DEFAULT_TEMPLATE = "it/could/confluence/autoexport/template.vm";
     /** <p>The encoding used to load, save, and parse templates.</p> */
     public static final String ENCODING = "UTF-8";
+    /** <p>The singleton instance of a {@link TemplatesManager}.</p> */
+    public static final TemplatesManager INSTANCE = new TemplatesManager();
 
-    /** <p>The {@link ConfigurationManager} used to locate templates.</p> */
-    private final ConfigurationManager configurationManager;
+    /** <p>The {@link BootstrapManager} used to locate templates.</p> */
+    private BootstrapManager bootstrapManager = null;
 
-    /** <p>Create a new {TemplatesManager} instance.</p> */
-    public TemplatesManager(ConfigurationManager configurationManager) {
-        this.configurationManager = configurationManager;
-        this.log.info("Instance created");
+    /** <p>Deny public construction.</p> */
+    private TemplatesManager() {
+        ContainerManager.autowireComponent(this);
     }
 
     /* ====================================================================== */
@@ -108,7 +112,7 @@ implements TemplatesAware {
      * <p>Return the {@link File} associated with a space template.</p>
      */
     private File file(String spaceKey) {
-        final String home = this.configurationManager.getConfluenceHome();
+        final String home = this.bootstrapManager.getConfiguredConfluenceHome();
         final File templates = new File(home, "velocity");
         return spaceKey == null ? new File(templates, "autoexport.vm") :
                new File(templates, "autoexport." + spaceKey + ".vm");
@@ -225,7 +229,6 @@ implements TemplatesAware {
 
         /* Attempt to write the template string down to a file */
         try {
-            if (! directory.isDirectory()) directory.mkdirs();
             final File temp = File.createTempFile("tpl-", ".tmp", directory);
             final OutputStream output = new FileOutputStream(temp);
             output.write(template.getBytes(ENCODING));
@@ -249,5 +252,16 @@ implements TemplatesAware {
 
         /* Ensure that the template can be parsed (and pre-cache it) */
         this.getTemplate(spaceKey);
+    }
+
+    /* ====================================================================== */
+    /* BEAN SETTER METHODS FOR SPRING AUTO-WIRING                             */
+    /* ====================================================================== */
+
+    /**
+     * <p>Setter for Spring's component wiring.</p>
+     */
+    public void setBootstrapManager(BootstrapManager bootstrapManager) {
+        this.bootstrapManager = bootstrapManager;
     }
 }

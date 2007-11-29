@@ -31,14 +31,14 @@
  * ========================================================================== */
 package it.could.confluence.autoexport.engine;
 
-import it.could.confluence.autoexport.AutoExportManager;
-import it.could.confluence.autoexport.ExportManager;
-import it.could.confluence.localization.LocalizedComponent;
+import it.could.confluence.ComponentSupport;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import bucket.container.ContainerManager;
+
+import com.atlassian.confluence.event.EventListener;
 import com.atlassian.confluence.event.events.ConfluenceEvent;
 import com.atlassian.confluence.event.events.content.blogpost.BlogPostCreateEvent;
 import com.atlassian.confluence.event.events.content.blogpost.BlogPostRemoveEvent;
@@ -46,23 +46,24 @@ import com.atlassian.confluence.event.events.content.blogpost.BlogPostUpdateEven
 import com.atlassian.confluence.event.events.content.page.PageCreateEvent;
 import com.atlassian.confluence.event.events.content.page.PageRemoveEvent;
 import com.atlassian.confluence.event.events.content.page.PageUpdateEvent;
+import com.atlassian.confluence.event.events.space.SpaceCreateEvent;
+import com.atlassian.confluence.event.events.space.SpaceRemoveEvent;
+import com.atlassian.confluence.event.events.space.SpaceUpdateEvent;
 import com.atlassian.confluence.pages.AbstractPage;
-import com.atlassian.confluence.pages.BlogPost;
 import com.atlassian.confluence.pages.Page;
-import com.atlassian.event.Event;
-import com.atlassian.event.EventListener;
 
 /**
  * <p>A Confluence {@link EventListener} instance triggering exports and
- * deletions in the {@link ExportManager}.</p>
+ * deletions in the {@link ExportEngine}.</p>
  */
-public class ExportListener extends LocalizedComponent implements EventListener {
+public class ExportListener extends ComponentSupport implements EventListener {
 
     /** <p>The array of events this instance can handle.</p> */
     private static final Class HANDLED_EVENTS[] = new Class[] {
-                            PageCreateEvent.class, BlogPostCreateEvent.class,
-                            PageRemoveEvent.class, BlogPostRemoveEvent.class,
-                            PageUpdateEvent.class, BlogPostUpdateEvent.class };
+        PageCreateEvent.class,     PageRemoveEvent.class,     PageUpdateEvent.class,
+        BlogPostCreateEvent.class, BlogPostRemoveEvent.class, BlogPostUpdateEvent.class,
+        SpaceCreateEvent.class,    SpaceRemoveEvent.class,    SpaceUpdateEvent.class
+    };
 
     /** <p>A null {@link Notifiable} used by this implementation.</p> */
     private static final Notifiable NULL_NOTIFIABLE = new Notifiable() {
@@ -71,40 +72,25 @@ public class ExportListener extends LocalizedComponent implements EventListener 
 
     /** <p>A {@link Map} used to hack infra-space moves of {@link Page}s.</p> */
     private final Map hack = new HashMap();
-
-    /** <p>The {@link ExportManager} used by this instance.</p> */
-    private ExportManager exportManager = null;
+    /** <p>The {@link ExportEngine} used by this instance.</p> */
+    private final ExportEngine enginex = new ExportEngine();
 
     /**
      * <p>Create a new {@link ExportListener} instance.</p>
      */
     public ExportListener() {
-        this.log.info("Instance created");
+        ContainerManager.autowireComponent(this);
     }
-
-    /* ====================================================================== */
-    /* BEAN SETTER METHODS FOR SPRING AUTO-WIRING                             */
-    /* ====================================================================== */
-
-    /**
-     * <p>Setter for Spring's component owiring.</p>
-     */
-    public void setAutoExportManager(AutoExportManager autoExportManager) {
-        this.exportManager = autoExportManager.getExportManager();
-    }
-
-    /* ====================================================================== */
-    /* EVENT HANDLING METHODS                                                 */
-    /* ====================================================================== */
 
     /**
      * <p>Handle a {@link ConfluenceEvent} triggering export and remove
-     * operations in the {@link ExportManager}.</p>
+     * operations in the {@link ExportEngine}.</p>
      */
-    public void handleEvent(Event event) {
+    public void handleEvent(ConfluenceEvent event) {
         if (event instanceof PageCreateEvent) {
             final PageCreateEvent pageEvent = (PageCreateEvent) event;
-            this.export(pageEvent.getPage());
+            final Page page = pageEvent.getPage();
+            this.export(page);
 
         } else if (event instanceof PageUpdateEvent) {
             final PageUpdateEvent pageEvent = (PageUpdateEvent) event;
@@ -131,7 +117,7 @@ public class ExportListener extends LocalizedComponent implements EventListener 
                 this.hack.put(new Long(page.getId()), page.getSpaceKey());
                 
                 /* Remove the previous page */
-                this.remove(spaceKey, pageTitle, null);
+                this.remove(spaceKey, pageTitle);
 
             } else {
                 /*
@@ -145,7 +131,7 @@ public class ExportListener extends LocalizedComponent implements EventListener 
                 final String spaceKey = spaceHack != null ?
                                         spaceHack : page.getSpaceKey();
                 final String pageTitle = page.getTitle();
-                this.remove(spaceKey, pageTitle, null);
+                this.remove(spaceKey, pageTitle);
             }
 
             /* In any case, an update event means that we have to regenerate */
@@ -154,20 +140,9 @@ public class ExportListener extends LocalizedComponent implements EventListener 
         } else if (event instanceof PageRemoveEvent) {
             final PageRemoveEvent pageEvent = (PageRemoveEvent) event;
             this.remove(pageEvent.getPage());
-        
-        } else if (event instanceof BlogPostCreateEvent) {
-            final BlogPostCreateEvent blogEvent = (BlogPostCreateEvent) event;
-            this.export(blogEvent.getBlogPost());
-
-        } else if (event instanceof BlogPostUpdateEvent) {
-            final BlogPostUpdateEvent blogEvent = (BlogPostUpdateEvent) event;
-            this.remove(blogEvent.getBlogPost());
-            this.export(blogEvent.getBlogPost());
-
-        } else if (event instanceof BlogPostRemoveEvent) {
-            final BlogPostRemoveEvent blogEvent = (BlogPostRemoveEvent) event;
-            this.remove(blogEvent.getBlogPost());
         }
+        
+        // TODO: handle space and blog events.
     }
 
     /**
@@ -176,25 +151,14 @@ public class ExportListener extends LocalizedComponent implements EventListener 
      */
     private void export(Page page) {
         if (page == null) return;
-
-        Page parent = page.getParent();
-        while (parent != null) {
-            this.exportManager.export(parent, NULL_NOTIFIABLE);
-            parent = parent.getParent();
+        
+        final Page parent = page.getParent();
+        if (parent == null) {
+            this.enginex.export(page.getSpaceKey(), NULL_NOTIFIABLE, false);
+        } else {
+            this.export(parent);
         }
-
-        this.exportManager.export(page, NULL_NOTIFIABLE);
-        this.exportManager.export(page.getSpace(), NULL_NOTIFIABLE, false);
-    }
-
-    /**
-     * <p>Export a {@link BlogPost} and the resources associated with the
-     * specified {@link BlogPost}'s space.</p>
-     */
-    private void export(BlogPost post) {
-        if (post == null) return;
-        this.exportManager.export(post, NULL_NOTIFIABLE);
-        this.exportManager.export(post.getSpace(), NULL_NOTIFIABLE, false);
+        this.enginex.export(page, NULL_NOTIFIABLE);
     }
 
     /**
@@ -204,28 +168,21 @@ public class ExportListener extends LocalizedComponent implements EventListener 
     private void remove(Page page) {
         if (page == null) return;
 
-        Page parent = page.getParent();
-        while (parent != null) {
-            this.exportManager.export(parent, NULL_NOTIFIABLE);
-            parent = parent.getParent();
+        final Page parent = page.getParent();
+        if (parent == null) {
+            this.enginex.export(page.getSpaceKey(), NULL_NOTIFIABLE, false);
+        } else {
+            this.export(parent);
         }
-
-        this.remove(page.getSpaceKey(), page.getTitle(), null);
-        this.exportManager.export(page.getSpace(), NULL_NOTIFIABLE, false);
+        this.remove(page.getSpaceKey(), page.getTitle());
     }
 
     /**
-     * <p>Remove a {@link BlogPost} and re-export the resources associated with
-     * the specified {@link BlogPost}'s space.</p>
+     * <p>Remove the page associated with the specified space key and 
+     * title.</p>
      */
-    private void remove(BlogPost post) {
-        if (post == null) return;
-        this.remove(post.getSpaceKey(), post.getTitle(), post.getCreationDate());
-        this.exportManager.export(post.getSpace(), NULL_NOTIFIABLE, false);
-    }
-
-    private void remove(String spaceKey, String pageTitle, Date postingDate) {
-        // TODO: implements removal
+    private void remove(String spaceKey, String pageTitle) {
+        this.enginex.remove(spaceKey, pageTitle, NULL_NOTIFIABLE);
     }
 
     /**

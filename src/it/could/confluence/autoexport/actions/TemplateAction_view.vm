@@ -35,6 +35,32 @@
   </head>
   <body>
     #parse ("/template/includes/actionerrors.vm")
-    #parse ("/it/could/confluence/autoexport/templates/breadcrumbs.vm")
+    #parse ("/it/could/confluence/autoexport/actions/messages.vm")
+    #if ($actionErrors.size() == 0)
+      <table class="grid" width="100%">
+        <thead>          
+          <tr>
+            <th style="$action.getText('style.title')">
+              #if ($action.getSpace() == '')
+                $action.getText('lbl.allspaces')
+              #else
+                $action.getText('lbl.namedspace',[$action.getSpaceName()])
+              #end
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><pre style="$action.getText('style.preformatted')">$action.data</pre></td></tr>
+        </tbody>
+        <tfoot>
+           <tr>
+            <th style="$action.getText('style.buttons')">
+              <input type="button" value="$action.getText('act.back')" onclick="location='$action.getText('uri.config')'">
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    #end
+    #parse ("/it/could/confluence/autoexport/actions/breadcrumbs.vm")
   </body>
 </html>

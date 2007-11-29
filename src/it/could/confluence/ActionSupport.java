@@ -29,37 +29,37 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE *
  * POSSIBILITY OF SUCH DAMAGE.                                                *
  * ========================================================================== */
-package it.could.confluence.localization;
-
+package it.could.confluence;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
+import bucket.container.ContainerManager;
+
 import com.atlassian.confluence.core.ConfluenceActionSupport;
-import com.atlassian.spring.container.ContainerManager;
 import com.opensymphony.xwork.ActionContext;
 
 /**
- * <p>The {@link LocalizedAction} abstract class extendes Confluence abstract
+ * <p>The {@link ActionSupport} abstract class extendes Confluence abstract
  * basic action to fix some issues in plugins loading and provide extended
  * localization functionality.</p>
  */
-public abstract class LocalizedAction extends ConfluenceActionSupport
+public abstract class ActionSupport extends ConfluenceActionSupport
 implements LocalizedResource {
 
     /** <p>The {@link LocalizationHelper} used by this instance.</p> */
     private final LocalizationHelper bundle;
 
     /**
-     * <p>Create a new instance of this {@link LocalizedAction}.</p>
+     * <p>Create a new instance of this {@link ActionSupport}.</p>
      * 
      * <p>This method will automatically invoke Spring's
      * {@link ContainerManager#autowireComponent(Object) autowiring mechanism}
      * on this instance.</p> 
      */
-    protected LocalizedAction() {
+    protected ActionSupport() {
         final Locale locale = ActionContext.getContext().getLocale();
         this.bundle = LocalizationHelper.getBundle(this.getClass(), locale);
     }
