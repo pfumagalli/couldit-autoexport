@@ -1,4 +1,4 @@
-/* ========================================================================== *
+#* ========================================================================== *
  *   Copyright (c) 2006, Pier Paolo Fumagalli <mailto:pier@betaversion.org>   *
  *                            All rights reserved.                            *
  * ========================================================================== *
@@ -28,29 +28,47 @@
  * CONTRACT,  STRICT LIABILITY,  OR TORT  (INCLUDING NEGLIGENCE OR OTHERWISE) *
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE *
  * POSSIBILITY OF SUCH DAMAGE.                                                *
- * ========================================================================== */
-package it.could.confluence.localization;
-
-
-/**
- * <p>The {@link LocalizedResource} interface indentifies an {@link Object}
- * intrinsecally providing support for localization.</p>
- */
-public interface LocalizedResource {
-    
-    /**
-     * <p>Return the localized version of the message identified by the
-     * specified key or the default value if the key was not found.</p>
-     */
-    public String localizeMessage(String key);
-
-    /**
-     * <p>Format the message identified by the specified format key according
-     * to the specified array of arguments.</p>
-     * 
-     * <p>If the format key was not found, then the default format specified
-     * will be used to format the returned message.</p>
-     */
-    public String localizeMessage(String key, Object arguments[]);
-
-}
+ * ========================================================================== *#
+<html>
+  <head>
+    <title>$action.getText("autoexport") $action.getText("title")</title>
+  </head>
+  <body>
+    #parse ("/template/includes/actionerrors.vm")
+    #parse ("/it/could/confluence/autoexport/actions/messages.vm")
+    <table class="grid" width="100%">
+      <thead>          
+        <tr>
+          <th colspan="2" style="$action.getText('style.title')">
+            $action.getText("lbl.log")
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <iframe style="$action.getText('style.invisible')" src="$action.getText('uri.rebuild-start')"></iframe>
+            <pre id="log" style="$action.getText('style.preformatted')">$action.getData()</pre>
+            <script type="text/javascript" language="javascript">//<!--
+              function handleReload(data) {
+                var log = null;
+                if (document.all) log = document.all['log'];
+                else log = document.getElementById('log');
+                if (log != null) log.innerHTML += data;
+              }
+            //--></script>
+            <iframe style="$action.getText('style.invisible')" src="$action.getText('uri.rebuild-update')"></iframe>
+          </td>
+        </tr>
+      </tbody>
+      <tfoot>
+         <tr>
+          <th style="$action.getText('style.buttons')">
+            <input type="button" value="$action.getText('act.back')" onclick="location='$action.getText('uri.config')'">
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+    #parse ("/it/could/confluence/autoexport/actions/breadcrumbs.vm")
+  </body>
+</html>

@@ -1,17 +1,3 @@
-AutoExport 0.14 [current release]
----------------------------------
-
-- Moved Change Log to Jira at <http://could.it/bugs/browse/EXP>
-
-AutoExport 0.13 [18 April 2006]
--------------------------------
-
-- Enhancing default template to match Confluence more closely.
-- Fixing MissingResourceException in localized resources.
-- Fixing bug when pages are created/modified by Anonymous.
-- Fixing links to Confluence (my Confluence was misconfigured).
-- Beautification of generated HTML content with CyberNeko.
-
 AutoExport 0.12 [22 March 2006]
 -------------------------------
 
@@ -50,4 +36,3 @@ AutoExport 0.9 [18 March 2006]
 ------------------------------
 
 - Initial public release with basic export functionality working.
-

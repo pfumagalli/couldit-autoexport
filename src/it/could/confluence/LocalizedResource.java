@@ -29,68 +29,28 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE *
  * POSSIBILITY OF SUCH DAMAGE.                                                *
  * ========================================================================== */
-package it.could.util;
+package it.could.confluence;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 
 /**
- * <p>An utility class providing various static methods operating on
- * {@link InputStream input} and {@link OutputStream output} streams.</p>
- *
- * @author <a href="http://could.it/">Pier Fumagalli</a>
+ * <p>The {@link LocalizedResource} interface indentifies an {@link Object}
+ * intrinsecally providing support for localization.</p>
  */
-public final class StreamTools {
-
-    /** <p>Deny construction.</p> */
-    private StreamTools() { };
+public interface LocalizedResource {
+    
+    /**
+     * <p>Return the localized version of the message identified by the
+     * specified key or the default value if the key was not found.</p>
+     */
+    public String localizeMessage(String key);
 
     /**
-     * <p>Copy every byte from the specified {@link InputStream} to the specifed
-     * {@link OutputStream} and then close both of them.</p>
+     * <p>Format the message identified by the specified format key according
+     * to the specified array of arguments.</p>
      * 
-     * <p>This method is equivalent to a call to the following method:
-     * {@link #copy(InputStream,OutputStream,boolean) copy(in, out, true)}.</p>
-     * 
-     * @param in the {@link InputStream} to read bytes from.
-     * @param out the {@link OutputStream} to write bytes to.
-     * @return the number of bytes copied.
-     * @throws IOException if an I/O error occurred copying the data.
+     * <p>If the format key was not found, then the default format specified
+     * will be used to format the returned message.</p>
      */
-    public static long copy(InputStream in, OutputStream out)
-    throws IOException {
-        return copy(in, out, true);
-    }
+    public String localizeMessage(String key, Object arguments[]);
 
-    /**
-     * <p>Copy every byte from the specified {@link InputStream} to the specifed
-     * {@link OutputStream} and then optionally close both of them.</p>
-     * 
-     * @param in the {@link InputStream} to read bytes from.
-     * @param out the {@link OutputStream} to write bytes to.
-     * @param close whether to close the streams or not.
-     * @return the number of bytes copied.
-     * @throws IOException if an I/O error occurred copying the data.
-     */
-    public static long copy(InputStream in, OutputStream out, boolean close)
-    throws IOException {
-        if (in == null) throw new NullPointerException("Null input");
-        if (out == null) throw new NullPointerException("Null output");
-
-        final byte buffer[] = new byte[4096];
-        int length = -1;
-        long total = 0;
-        while ((length = in.read(buffer)) >= 0) {
-            out.write(buffer, 0, length);
-            total += length;
-        }
-        
-        if (close) {
-            in.close();
-            out.close();
-        }
-
-        return total;
-    }
 }

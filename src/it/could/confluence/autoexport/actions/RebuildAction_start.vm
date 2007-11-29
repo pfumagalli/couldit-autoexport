@@ -1,4 +1,4 @@
-/* ========================================================================== *
+#* ========================================================================== *
  *   Copyright (c) 2006, Pier Paolo Fumagalli <mailto:pier@betaversion.org>   *
  *                            All rights reserved.                            *
  * ========================================================================== *
@@ -28,40 +28,13 @@
  * CONTRACT,  STRICT LIABILITY,  OR TORT  (INCLUDING NEGLIGENCE OR OTHERWISE) *
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE *
  * POSSIBILITY OF SUCH DAMAGE.                                                *
- * ========================================================================== */
-package it.could.util.encoding;
-
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-
-/**
- * <p>The {@link EncodingAware} interface describes an {@link Object} aware
- * of multiple encodings existing withing the platform.</p>
- *
- * @author <a href="http://could.it/">Pier Fumagalli</a>
- */
-public interface EncodingAware {
-
-    /** <p>The default encoding is specified as being <code>UTF-8</code>.</p> */
-    public static final String DEFAULT_ENCODING = Encodings.get("UTF-8");
-
-    /** <p>The platform encoding is evaluated at runtime from the JVM.</p> */
-    public static final String PLATFORM_ENCODING = Encodings.get(null);
-
-}
-
-/** Utility class to create the final fields of the EncodingAware interface */
-class Encodings {
-    static String get(String encoding) {
-        final ByteArrayOutputStream s = new ByteArrayOutputStream();
-        if (encoding == null) return new OutputStreamWriter(s).getEncoding();
-        try {
-            return new OutputStreamWriter(s, encoding).getEncoding();
-        } catch (UnsupportedEncodingException exception) {
-            final String message = "Default encoding \"" + encoding +
-                                   "\" not supported by the platform";
-            throw (Error) new InternalError(message).initCause(exception);
-        }
-    }
-}
+ * ========================================================================== *#
+<html>
+  <head>
+    <title>$action.getText("autoexport") $action.getText("title")</title>
+  </head>
+  <body>
+    #parse ("/template/includes/actionerrors.vm")
+    #parse ("/it/could/confluence/autoexport/actions/breadcrumbs.vm")
+  </body>
+</html>
