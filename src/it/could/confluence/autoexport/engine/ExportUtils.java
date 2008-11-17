@@ -41,7 +41,7 @@ import org.apache.log4j.Logger;
 import com.atlassian.confluence.pages.AbstractPage;
 import com.atlassian.confluence.pages.BlogPost;
 import com.atlassian.confluence.pages.Page;
-import com.atlassian.confluence.renderer.WikiStyleRenderer;
+import com.atlassian.renderer.WikiStyleRenderer;
 import com.atlassian.confluence.spaces.Space;
 import com.atlassian.confluence.util.GeneralUtil;
 import com.atlassian.plugin.Plugin;

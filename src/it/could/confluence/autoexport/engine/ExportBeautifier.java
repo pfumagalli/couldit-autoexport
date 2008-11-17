@@ -335,7 +335,8 @@ public class ExportBeautifier extends Writer {
                 /* Convert the path as Confluence would, getting the action */
                 for (int y = 0; y < CONVERTERS.length; y++) {
                     if (! CONVERTERS[y].handles(path)) continue;
-                    final String conv = CONVERTERS[y].getPath(path);
+                    final String conv = CONVERTERS[y].getPath(path).getPath();
+                    LOGGER.warn("Found converted path" + conv);
                     location = Location.parse(this.confluenceBase + conv);
                     break;
                 }

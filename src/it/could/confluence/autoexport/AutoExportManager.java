@@ -6,7 +6,7 @@ import com.atlassian.config.ApplicationConfig;
 import com.atlassian.config.bootstrap.AtlassianBootstrapManager;
 import com.atlassian.confluence.pages.PageManager;
 import com.atlassian.confluence.pages.thumbnail.ThumbnailManager;
-import com.atlassian.confluence.renderer.WikiStyleRenderer;
+import com.atlassian.renderer.WikiStyleRenderer;
 import com.atlassian.confluence.security.PermissionManager;
 import com.atlassian.confluence.setup.settings.SettingsManager;
 import com.atlassian.confluence.spaces.SpaceManager;

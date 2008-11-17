@@ -52,6 +52,7 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.exception.MethodInvocationException;
 
 import com.atlassian.confluence.core.actions.StylesheetAction;
+import com.atlassian.confluence.util.ConfluenceRenderUtils;
 import com.atlassian.confluence.pages.AbstractPage;
 import com.atlassian.confluence.pages.Attachment;
 import com.atlassian.confluence.pages.BlogPost;
@@ -59,7 +60,7 @@ import com.atlassian.confluence.pages.Page;
 import com.atlassian.confluence.pages.PageManager;
 import com.atlassian.confluence.pages.actions.ViewPageAction;
 import com.atlassian.confluence.pages.thumbnail.ThumbnailManager;
-import com.atlassian.confluence.renderer.WikiStyleRenderer;
+import com.atlassian.renderer.WikiStyleRenderer;
 import com.atlassian.confluence.spaces.Space;
 import com.atlassian.confluence.spaces.SpaceManager;
 import com.atlassian.confluence.util.GeneralUtil;
@@ -177,7 +178,7 @@ public class ExportManager extends LocalizedComponent {
         }
 
         /* Export the resources associated with the space */
-        final String styleData = StylesheetAction.renderSpaceStylesheet(space);
+        final String styleData = ConfluenceRenderUtils.renderSpaceStylesheet(space);
         final File styleFile = this.locationManager.getFile(space, "space.css");
         try {
             final File resourcesDir = styleFile.getParentFile();

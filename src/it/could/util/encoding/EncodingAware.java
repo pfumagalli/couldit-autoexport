@@ -50,18 +50,3 @@ public interface EncodingAware {
     public static final String PLATFORM_ENCODING = Encodings.get(null);
 
 }
-
-/** Utility class to create the final fields of the EncodingAware interface */
-class Encodings {
-    static String get(String encoding) {
-        final ByteArrayOutputStream s = new ByteArrayOutputStream();
-        if (encoding == null) return new OutputStreamWriter(s).getEncoding();
-        try {
-            return new OutputStreamWriter(s, encoding).getEncoding();
-        } catch (UnsupportedEncodingException exception) {
-            final String message = "Default encoding \"" + encoding +
-                                   "\" not supported by the platform";
-            throw (Error) new InternalError(message).initCause(exception);
-        }
-    }
-}
