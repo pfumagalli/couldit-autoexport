@@ -31,7 +31,7 @@
  | POSSIBILITY OF SUCH DAMAGE.                                                |
  + =========================================================================-->
    
-<atlassian-plugin name="Auto Export Plugin" key="confluence.extra.autoexport">
+<atlassian-plugin name="${project.name}" key="confluence.extra.autoexport" plugins-version="2">
   
   <!--+ ========================================================================
       | PLUGIN DETAILS
@@ -44,15 +44,10 @@
       + --> 
   <plugin-info>
     <description>
-      <![CDATA[
-        Automatically export all content on changes so that it can be published
-        statically using a normal web server like Apache HTTPd.<br /><br />
-        <img src="../images/icons/bullet_creme.gif" height="8" width="8" border="0" alt=""/>
-        <a href="autoexport/configuration.action">Configure plugin</a>        
-      ]]>
+      ${project.description}
     </description>
     <vendor name="Pier Fumagalli" url="http://could.it/autoexport/"/>
-    <version>@VERSION@</version>
+    <version>${project.version}</version>
   </plugin-info>
 
   <!--+ ========================================================================
@@ -61,9 +56,27 @@
       | The configured components will be shared amongst the other instances
       | declared below.
       + --> 
-  <component name="AutoExport Manager" class="it.could.confluence.autoexport.AutoExportManager" key="autoExportManager">
+  <component name="AutoExport Configuration Manager" class="it.could.confluence.autoexport.ConfigurationManager" key="configurationManager">
     <description>A component managing the different subcomponents of the AutoExport plugin.</description>
   </component>
+  <component name="AutoExport Export Manager" class="it.could.confluence.autoexport.ExportManager" key="exportManager">
+    <description>A component managing the different subcomponents of the AutoExport plugin.</description>
+  </component>
+  <component name="AutoExport Location Manager" class="it.could.confluence.autoexport.LocationManager" key="locationManager">
+    <description>A component managing the different subcomponents of the AutoExport plugin.</description>
+  </component>
+
+    <component name="AutoExport Templates Manager" class="it.could.confluence.autoexport.TemplatesManager" key="templatesManager">
+    <description>A component managing the different subcomponents of the AutoExport plugin.</description>
+  </component>
+    <component name="AutoExport Plugin Builder" class="it.could.confluence.autoexport.PluginBuilder" key="pluginBuilder">
+    <description>A component managing the different subcomponents of the AutoExport plugin.</description>
+  </component>
+
+     <web-item name="Admin Menu Link" key="confluenceAdminMenuLink" section="system.admin/configuration" application="com.atlassian.confluence">
+        <label>Auto Export</label>
+        <link>/admin/autoexport/configuration.action</link>
+    </web-item>
 
   <!--+ ========================================================================
       | LISTENER CONFIGURATION

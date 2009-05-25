@@ -31,7 +31,6 @@
  * ========================================================================== */
 package it.could.confluence.autoexport.engine;
 
-import it.could.confluence.autoexport.AutoExportManager;
 import it.could.confluence.autoexport.ExportManager;
 import it.could.confluence.localization.LocalizedComponent;
 
@@ -73,24 +72,15 @@ public class ExportListener extends LocalizedComponent implements EventListener 
     private final Map hack = new HashMap();
 
     /** <p>The {@link ExportManager} used by this instance.</p> */
-    private ExportManager exportManager = null;
+    private final ExportManager exportManager;
 
     /**
      * <p>Create a new {@link ExportListener} instance.</p>
+     * @param exportManager
      */
-    public ExportListener() {
+    public ExportListener(ExportManager exportManager) {
+        this.exportManager = exportManager;
         this.log.info("Instance created");
-    }
-
-    /* ====================================================================== */
-    /* BEAN SETTER METHODS FOR SPRING AUTO-WIRING                             */
-    /* ====================================================================== */
-
-    /**
-     * <p>Setter for Spring's component owiring.</p>
-     */
-    public void setAutoExportManager(AutoExportManager autoExportManager) {
-        this.exportManager = autoExportManager.getExportManager();
     }
 
     /* ====================================================================== */

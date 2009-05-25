@@ -44,6 +44,7 @@ import java.util.Map;
 
 import com.atlassian.config.ApplicationConfig;
 import com.atlassian.config.ConfigurationException;
+import com.atlassian.config.ApplicationConfiguration;
 import com.atlassian.config.bootstrap.AtlassianBootstrapManager;
 import com.atlassian.confluence.setup.settings.SettingsManager;
 import com.atlassian.confluence.spaces.Space;
@@ -78,8 +79,8 @@ public class ConfigurationManager extends LocalizedComponent {
     private final AtlassianBootstrapManager bootstrapManager;
     /** <p>The {@link SettingsManager} accessing core application settings.</p> */
     private final SettingsManager settingsManager;
-    /** <p>The {@link ConfluenceApplicationConfig} for configurations.</p> */
-    private final ApplicationConfig applicationConfig;
+    /** <p>The {@link ApplicationConfig} for configurations.</p> */
+    private final ApplicationConfiguration applicationConfig;
 
     /** <p>The currently configured export encoding.</p> */
     private String encoding = null;
@@ -89,11 +90,11 @@ public class ConfigurationManager extends LocalizedComponent {
     private String userName = null;
 
     /** <p>Create a new {@link ConfigurationManager} instance.</p> */
-    ConfigurationManager(UserManager userManager,
+    public ConfigurationManager(UserManager userManager,
                          SpaceManager spaceManager,
                          AtlassianBootstrapManager bootstrapManager,
                          SettingsManager settingsManager,
-                         ApplicationConfig applicationConfig) {
+                         ApplicationConfiguration applicationConfig) {
 
         this.userManager = userManager;
         this.spaceManager = spaceManager;
@@ -147,8 +148,6 @@ public class ConfigurationManager extends LocalizedComponent {
 
     /**
      * <p>Wipe out the entire configuration and remove the properties file.</p>
-     * 
-     * @throws AutoExportException If an error occurred deleting the configuration.
      */
     public void delete()
     throws LocalizedException {

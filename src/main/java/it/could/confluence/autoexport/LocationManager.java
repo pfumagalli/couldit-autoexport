@@ -63,7 +63,7 @@ public class LocationManager extends LocalizedComponent {
     private final UserManager userManager;
 
     /** <p>Create a new {@link LocationManager} instance.</p> */
-    LocationManager(ConfigurationManager configurationManager,
+    public LocationManager(ConfigurationManager configurationManager,
                     PermissionManager permissionManager,
                     UserManager userManager) {
 

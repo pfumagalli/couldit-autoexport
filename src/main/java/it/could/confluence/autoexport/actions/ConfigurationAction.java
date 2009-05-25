@@ -31,7 +31,6 @@
  * ========================================================================== */
 package it.could.confluence.autoexport.actions;
 
-import it.could.confluence.autoexport.AutoExportManager;
 import it.could.confluence.autoexport.ConfigurationManager;
 import it.could.confluence.autoexport.TemplatesManager;
 import it.could.confluence.localization.LocalizedAction;
@@ -44,6 +43,9 @@ import java.util.List;
 import com.atlassian.confluence.core.Administrative;
 import com.atlassian.confluence.spaces.SpaceManager;
 import com.atlassian.confluence.spaces.SpaceType;
+import org.apache.commons.logging.LogFactory;
+import org.apache.commons.logging.Log;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * <p>An action managing the AutoExport plugin configuration.</p>
@@ -51,12 +53,9 @@ import com.atlassian.confluence.spaces.SpaceType;
 public class ConfigurationAction extends LocalizedAction
 implements Administrative {
 
-    /** <p>The {@link SpaceManager} wired by Spring.</p> */
-    private SpaceManager spaceManager = null;
-    /** <p>The {@link ConfigurationManager} wired by Spring.</p> */
-    private ConfigurationManager configurationManager = null;
-    /** <p>The {@link TemplatesManager} wired by Spring.</p> */
-    private TemplatesManager templatesManager = null;
+    private SpaceManager spaceManager;
+    private ConfigurationManager configurationManager;
+    private TemplatesManager templatesManager;
 
     /** <p>The currently configured encoding.</p> */
     private String encoding = null;
@@ -65,31 +64,12 @@ implements Administrative {
     /** <p>The currently configured user name.</p> */
     private String userName = null;
 
-    /**
-     * <p>Create a new {@link ConfigurationAction} instance.</p>
-     */
-    public ConfigurationAction() {
-        this.log.info("Instance created");
-    }
+    private static final Log log = LogFactory.getLog(ConfigurationAction.class);
 
     /* ====================================================================== */
     /* BEAN SETTER METHODS FOR SPRING AUTO-WIRING                             */
     /* ====================================================================== */
 
-    /**
-     * <p>Setter for Spring's component owiring.</p>
-     */
-    public void setSpaceManager(SpaceManager spaceManager) {
-        this.spaceManager = spaceManager;
-    }
-
-    /**
-     * <p>Setter for Spring's component owiring.</p>
-     */
-    public void setAutoExportManager(AutoExportManager autoExportManager) {
-        this.templatesManager = autoExportManager.getTemplatesManager();
-        this.configurationManager = autoExportManager.getConfigurationManager();
-    }
 
     /* ====================================================================== */
     /* ACTION METHODS                                                         */
@@ -239,5 +219,20 @@ implements Administrative {
      */
     public List getEncodings() {
         return new ArrayList(Charset.availableCharsets().keySet());
+    }
+
+    public void setSpaceManager(SpaceManager spaceManager)
+    {
+        this.spaceManager = spaceManager;
+    }
+
+    public void setConfigurationManager(ConfigurationManager configurationManager)
+    {
+        this.configurationManager = configurationManager;
+    }
+
+    public void setTemplatesManager(TemplatesManager templatesManager)
+    {
+        this.templatesManager = templatesManager;
     }
 }

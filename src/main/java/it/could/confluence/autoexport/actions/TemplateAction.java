@@ -31,7 +31,6 @@
  * ========================================================================== */
 package it.could.confluence.autoexport.actions;
 
-import it.could.confluence.autoexport.AutoExportManager;
 import it.could.confluence.autoexport.TemplatesManager;
 import it.could.confluence.localization.LocalizedAction;
 import it.could.confluence.localization.LocalizedException;
@@ -40,6 +39,8 @@ import java.io.IOException;
 
 import com.atlassian.confluence.core.Administrative;
 import com.atlassian.confluence.spaces.SpaceManager;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * <p>An action managing the templates used by the AutoExport plugin.</p>
@@ -48,38 +49,14 @@ public class TemplateAction extends LocalizedAction
 implements Administrative {
 
     /** <p>The {@link TemplatesManager} used to validate spaces.</p> */
-    private TemplatesManager templatesManager = null;
+    private TemplatesManager templatesManager;
     /** <p>The {@link SpaceManager} used to validate spaces.</p> */
-    private SpaceManager spaceManager = null;
+    private SpaceManager spaceManager;
     /** <p>The current space key or <b>null</b> for all spaces.</p> */
     private String space = null;
     /** <p>The current template data.</p> */
     private String data = null;
-
-    /**
-     * <p>Create a new {@link TemplateAction} instance.</p>
-     */
-    public TemplateAction() {
-        this.log.info("Instance created");
-    }
-
-    /* ====================================================================== */
-    /* BEAN SETTER METHODS FOR SPRING AUTO-WIRING                             */
-    /* ====================================================================== */
-
-    /**
-     * <p>Setter for Spring's component owiring.</p>
-     */
-    public void setAutoExportManager(AutoExportManager autoExportManager) {
-        this.templatesManager = autoExportManager.getTemplatesManager();
-    }
-
-    /**
-     * <p>Setter for Spring's component wiring.</p>
-     */
-    public void setSpaceManager(SpaceManager spaceManager) {
-        this.spaceManager = spaceManager;
-    }
+    private static final Log log = LogFactory.getLog(TemplateAction.class);
 
     /* ====================================================================== */
     /* ACTION METHODS                                                         */
@@ -194,5 +171,15 @@ implements Administrative {
         } catch (Exception exception) {
             return null;
         }
+    }
+
+    public void setTemplatesManager(TemplatesManager templatesManager)
+    {
+        this.templatesManager = templatesManager;
+    }
+
+    public void setSpaceManager(SpaceManager spaceManager)
+    {
+        this.spaceManager = spaceManager;
     }
 }

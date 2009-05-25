@@ -31,10 +31,30 @@
  * ========================================================================== */
 package it.could.confluence.autoexport;
 
+import com.atlassian.confluence.pages.AbstractPage;
+import com.atlassian.confluence.pages.Attachment;
+import com.atlassian.confluence.pages.BlogPost;
+import com.atlassian.confluence.pages.Page;
+import com.atlassian.confluence.pages.PageManager;
+import com.atlassian.confluence.pages.actions.ViewPageAction;
+import com.atlassian.confluence.pages.thumbnail.ThumbnailManager;
+import com.atlassian.confluence.spaces.Space;
+import com.atlassian.confluence.spaces.SpaceManager;
+import com.atlassian.confluence.util.ConfluenceRenderUtils;
+import com.atlassian.confluence.util.GeneralUtil;
+import com.atlassian.core.util.FileUtils;
+import com.atlassian.plugin.PluginAccessor;
+import com.atlassian.renderer.WikiStyleRenderer;
+import com.atlassian.spring.container.ContainerManager;
+import com.opensymphony.util.TextUtils;
+import com.opensymphony.xwork.ActionContext;
 import it.could.confluence.autoexport.engine.ExportBeautifier;
 import it.could.confluence.autoexport.engine.ExportUtils;
 import it.could.confluence.autoexport.engine.Notifiable;
 import it.could.confluence.localization.LocalizedComponent;
+import org.apache.velocity.Template;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.exception.MethodInvocationException;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -46,29 +66,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-
-import org.apache.velocity.Template;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.exception.MethodInvocationException;
-
-import com.atlassian.confluence.core.actions.StylesheetAction;
-import com.atlassian.confluence.util.ConfluenceRenderUtils;
-import com.atlassian.confluence.pages.AbstractPage;
-import com.atlassian.confluence.pages.Attachment;
-import com.atlassian.confluence.pages.BlogPost;
-import com.atlassian.confluence.pages.Page;
-import com.atlassian.confluence.pages.PageManager;
-import com.atlassian.confluence.pages.actions.ViewPageAction;
-import com.atlassian.confluence.pages.thumbnail.ThumbnailManager;
-import com.atlassian.renderer.WikiStyleRenderer;
-import com.atlassian.confluence.spaces.Space;
-import com.atlassian.confluence.spaces.SpaceManager;
-import com.atlassian.confluence.util.GeneralUtil;
-import com.atlassian.core.util.FileUtils;
-import com.atlassian.plugin.PluginAccessor;
-import com.atlassian.spring.container.ContainerManager;
-import com.opensymphony.util.TextUtils;
-import com.opensymphony.xwork.ActionContext;
 
 /**
  * <p>The {@link ExportManager} class represents the core object exporting
@@ -98,7 +95,7 @@ public class ExportManager extends LocalizedComponent {
     private final PluginAccessor pluginAccessor;
 
     /** <p>Create a new {@link ExportManager} instance.</p> */
-    ExportManager(TemplatesManager templatesManager,
+    public ExportManager(TemplatesManager templatesManager,
                   LocationManager locationManager,
                   ConfigurationManager configurationManager,
                   SpaceManager spaceManager,

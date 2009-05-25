@@ -43,14 +43,16 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.net.URL;
 
 import org.apache.velocity.Template;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.exception.ParseErrorException;
 import org.apache.velocity.exception.ResourceNotFoundException;
 
-import com.atlassian.confluence.util.ConfluenceVelocityResourceCache;
 import com.opensymphony.webwork.views.velocity.VelocityManager;
+import com.atlassian.confluence.util.velocity.ConfluenceVelocityResourceCache;
+import com.atlassian.plugin.PluginAccessor;
 
 /**
  * <p>The {@link TemplatesManager} provides a single access point for all
@@ -61,13 +63,16 @@ implements TemplatesAware {
 
     /** <p>The encoding used to load, save, and parse templates.</p> */
     public static final String ENCODING = "UTF-8";
+    
 
     /** <p>The {@link ConfigurationManager} used to locate templates.</p> */
-    private final ConfigurationManager configurationManager;
+    private final PluginBuilder pluginBuilder;
+    private final PluginAccessor pluginAccessor;
 
     /** <p>Create a new {TemplatesManager} instance.</p> */
-    public TemplatesManager(ConfigurationManager configurationManager) {
-        this.configurationManager = configurationManager;
+    public TemplatesManager(ConfigurationManager configurationManager, PluginBuilder pluginBuilder, PluginAccessor pluginAccessor) {
+        this.pluginBuilder = pluginBuilder;
+        this.pluginAccessor = pluginAccessor;
         this.log.info("Instance created");
     }
 
@@ -107,11 +112,10 @@ implements TemplatesAware {
     /**
      * <p>Return the {@link File} associated with a space template.</p>
      */
-    private File file(String spaceKey) {
-        final String home = this.configurationManager.getConfluenceHome();
-        final File templates = new File(home, "velocity");
-        return spaceKey == null ? new File(templates, "autoexport.vm") :
-               new File(templates, "autoexport." + spaceKey + ".vm");
+    private URL findTemplate(String spaceKey) {
+        ClassLoader cl = pluginAccessor.getClassLoader();
+        return spaceKey == null ? cl.getResource("autoexport.vm") :
+               cl.getResource("autoexport." + spaceKey + ".vm");
     }
 
     /* ====================================================================== */
@@ -126,8 +130,7 @@ implements TemplatesAware {
     throws LocalizedException {
         String template = DEFAULT_TEMPLATE;
         if (this.hasCustomTemplate(spaceKey)) {
-            if (spaceKey == null) template = "autoexport.vm";
-            else template = "autoexport." + spaceKey + ".vm";
+            template = createTemplateName(spaceKey);
         } else if (this.hasCustomTemplate(null)) {
             template = "autoexport.vm";
         }
@@ -143,6 +146,14 @@ implements TemplatesAware {
         } catch (Exception exception) {
             throw new LocalizedException(this, "template.initerror", template, exception);
         }
+    }
+
+    private String createTemplateName(String spaceKey)
+    {
+        String template;
+        if (spaceKey == null) template = "autoexport.vm";
+        else template = "autoexport." + spaceKey + ".vm";
+        return template;
     }
 
     /* ====================================================================== */
@@ -179,12 +190,12 @@ implements TemplatesAware {
     public String readCustomTemplate(String spaceKey)
     throws LocalizedException {
 
-        final File file = this.file(spaceKey);
-        if (! file.isFile()) {
+        final URL url = this.findTemplate(spaceKey);
+        if (url == null) {
             return spaceKey == null ? this.readDefaultTemplate() :
                                       this.readCustomTemplate(null);
         } else try {
-            return read(new FileInputStream(file));
+            return read(url.openStream());
         } catch (IOException exception) {
             throw new LocalizedException(this, "reading.custom", spaceKey, exception);
         }
@@ -195,7 +206,7 @@ implements TemplatesAware {
      * template or not.</p>
      */
     public boolean hasCustomTemplate(String spaceKey) {
-        return this.file(spaceKey).isFile();
+        return findTemplate(spaceKey) != null;
     }
 
     /**
@@ -207,7 +218,7 @@ implements TemplatesAware {
      */
     public boolean removeCustomTemplate(String spaceKey)
     throws IOException {
-        return this.file(spaceKey).delete();
+        return pluginBuilder.remove(createTemplateName(spaceKey));
     }
 
     /**
@@ -219,30 +230,10 @@ implements TemplatesAware {
      */
     public void writeCustomTemplate(String spaceKey, String template)
     throws LocalizedException {
-        /* Retrieve the file, and the velocity templates directory */
-        final File file = this.file(spaceKey);
-        final File directory = file.getParentFile();
+        String templateName = createTemplateName(spaceKey);
+        pluginBuilder.add(templateName, template);
 
-        /* Attempt to write the template string down to a file */
-        try {
-            if (! directory.isDirectory()) directory.mkdirs();
-            final File temp = File.createTempFile("tpl-", ".tmp", directory);
-            final OutputStream output = new FileOutputStream(temp);
-            output.write(template.getBytes(ENCODING));
-            output.flush();
-            output.close();
-
-            if (! temp.renameTo(file)) {
-                throw new LocalizedException(this, "writing.rename", new Object[] { temp, file });
-            }
-    
-        } catch (IOException exception) {
-            throw new LocalizedException(this, "writing.error", "Error writing "
-                                         + "template contents", exception);
-        }
-        
         /* Wipe the cache within confluence of the template */
-        final String templateName = file.getName();
         this.log.info(this.localizeMessage("template.flushing",
                                            new Object[] { templateName }));
         ConfluenceVelocityResourceCache.removeFromCaches(templateName);

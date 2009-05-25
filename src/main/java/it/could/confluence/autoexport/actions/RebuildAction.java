@@ -31,17 +31,15 @@
  * ========================================================================== */
 package it.could.confluence.autoexport.actions;
 
-import it.could.confluence.autoexport.AutoExportManager;
 import it.could.confluence.autoexport.ExportManager;
-import it.could.confluence.autoexport.engine.Notifiable;
 import it.could.confluence.localization.LocalizedAction;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import com.atlassian.confluence.core.Administrative;
 import com.atlassian.confluence.spaces.Space;
@@ -54,52 +52,26 @@ import com.atlassian.confluence.spaces.SpaceType;
  */
 public class RebuildAction extends LocalizedAction implements Administrative {
 
-    /** <p>The singleton {@link Task} instance (only one running).</p> */
-    private static Task TASK_INSTANCE = null;
+    /** <p>The singleton {@link RebuildTask} instance (only one running).</p> */
+    private static RebuildTask TASK_INSTANCE = null;
 
-    /** <p>The {@link ExportManager} used to export spaces.</p> */
-    private ExportManager exportManager = null;
-    /** <p>The {@link SpaceManager} used to validate spaces.</p> */
-    private SpaceManager spaceManager = null;
-    /** <p>The current {@link Task} instance.</p> */
-    private Task executor = TASK_INSTANCE;
+    private ExportManager exportManager;
+    private SpaceManager spaceManager;
+    private RebuildTask executor = TASK_INSTANCE;
+
     /** <p>The array of {@link Space}s to export manually.</p> */
     private String spaces[] = null;
     /** <p>The current logging data to show in the template.</p> */
     private String data = null;
+    private static final Log log = LogFactory.getLog(RebuildAction.class);
 
-    /**
-     * <p>Create a new {@link RebuildAction} instance.</p>
-     */
-    public RebuildAction() {
-        this.log.info("Instance created");
-    }
-
-    /* ====================================================================== */
-    /* BEAN SETTER METHODS FOR SPRING AUTO-WIRING                             */
-    /* ====================================================================== */
-
-    /**
-     * <p>Setter for Spring's component wiring.</p>
-     */
-    public void setSpaceManager(SpaceManager spaceManager) {
-        this.log.debug("SpaceManager instance set");
-        this.spaceManager = spaceManager;
-    }
-
-    /**
-     * <p>Setter for Spring's component owiring.</p>
-     */
-    public void setAutoExportManager(AutoExportManager autoExportManager) {
-        this.exportManager = autoExportManager.getExportManager();
-    }
 
     /* ====================================================================== */
     /* ACTION METHODS                                                         */
     /* ====================================================================== */
 
     /**
-     * <p>Execute a manual export operation, creating a new {@link Task}
+     * <p>Execute a manual export operation, creating a new {@link RebuildTask}
      * instance and running it.</p>
      */
     public String execute() {
@@ -134,7 +106,7 @@ public class RebuildAction extends LocalizedAction implements Administrative {
         /* What to do if we already have an executor in the session? */
         if (this.executor != null) {
             /* If the executor is running, just fail */
-            if (this.executor.running) {
+            if (this.executor.isRunning()) {
                 this.addActionError(this.getText("err.running"));
             
             /* The executor is not running, this is the last invocation */
@@ -158,7 +130,7 @@ public class RebuildAction extends LocalizedAction implements Administrative {
                 final Space space = this.spaceManager.getSpace(this.spaces[x]);
                 if (space != null) names[x] = space.getName();
             }
-            TASK_INSTANCE = this.executor = new Task(this.spaces, names,
+            TASK_INSTANCE = this.executor = new RebuildTask(this.spaces, names,
                                                      this.exportManager);
             this.executor.getCurrentLog();
         }
@@ -178,7 +150,7 @@ public class RebuildAction extends LocalizedAction implements Administrative {
     public String start() {
         if (this.executor == null) {
             this.addActionError("Executor task does not exist");
-        } if (this.executor.started) {
+        } if (this.executor.isStarted()) {
             this.addActionError("Executor task already started");
         } else {
             this.log.info("Starting executor");
@@ -217,7 +189,7 @@ public class RebuildAction extends LocalizedAction implements Administrative {
      */
     public boolean hasData() {
         /* If the Executor is not running, remove it from the session */
-        if ((this.executor != null) && (! this.executor.running))
+        if ((this.executor != null) && (! this.executor.isRunning()))
             TASK_INSTANCE = null;
 
         /* Return wether we had an executor at the time we were created */
@@ -236,115 +208,14 @@ public class RebuildAction extends LocalizedAction implements Administrative {
     /* INNER CLASSES                                                          */
     /* ====================================================================== */
 
-    /**
-     * <p>The {@link RebuildAction.Task Task} class is used by the
-     * {@link RebuildAction} to export {@link Space}s in background.</p>
-     */
-    public static final class Task implements Runnable, Notifiable {
-        /** <p>The {@link Logger} of the class specified at construction.</p> */
-        private final Logger log = Logger.getLogger(Task.class);
-        /** <p>The {@link ExportManager} used to export spaces.</p> */
-        private final ExportManager exportManager;
-        /** <p>The full log of this task.</p> */
-        private final StringBuffer previousLog = new StringBuffer();
-        /** <p>The data added to the full log.</p> */
-        private final StringBuffer currentLog = new StringBuffer();
-        /** <p>The list of {@link Space}s to export.</p> */
-        private final String spaceKeys[];
-        /** <p>The names of the {@link Space}s to export.</p> */
-        private final String spaceNames[];
-        /** <p>A flag indicating whether this task is running or not.</p> */
-        private boolean started = false;
-        /** <p>A flag indicating whether this task is running or not.</p> */
-        private boolean running = true;
-        
-        /**
-         * <p>Create a new {@link Task} instance.</p>
-         */
-        private Task(String spaceKeys[], String spaceNames[],
-                     ExportManager exportManager) {
-            this.notify("Starting export task for the following spaces:");
-            this.spaceKeys = spaceKeys;
-            this.spaceNames = spaceNames;
-            this.exportManager = exportManager;
 
-            /* TODO: This will throw a Hibernate Exception */
-            //new Thread(new ThreadGroup("wa"), this, "wa").start();
-        }
+    public void setExportManager(ExportManager exportManager)
+    {
+        this.exportManager = exportManager;
+    }
 
-        /**
-         * <p>Record an object as a log message.</p>
-         */
-        public void notify(Object object) {
-            if (object == null) return;
-            synchronized (this.currentLog) {
-                this.currentLog.append('[');
-                this.currentLog.append(new Date());
-                this.currentLog.append("] ");
-                if (object instanceof Throwable) {
-                    this.currentLog.append("*** EXCEPTION *** ");
-                    this.currentLog.append(object.getClass().getName());
-                    this.currentLog.append(": ");
-                    this.currentLog.append(((Throwable)object).getMessage());
-                    this.log.warn("Exporting: Exception", (Throwable) object);
-                } else {
-                    this.currentLog.append("Exporting: " + object.toString());
-                    this.log.info(object);
-                }
-                this.currentLog.append('\n');
-            }
-        }
-
-        /**
-         * <p>Export all the spaces specified at construction.</p>
-         */
-        public void run() {
-            this.started = true;
-            try {
-                for (int x = 0; x < this.spaceKeys.length; x ++) {
-                    this.notify(" - " + this.spaceNames[x] +  " [key=" +
-                                this.spaceKeys[x] + "]");
-                }
-                this.exportManager.export(this.spaceKeys, this, true);
-
-            } catch (Throwable throwable) {
-                this.notify(throwable);
-            } finally {
-                this.notify("Finished");
-                this.running = false;
-            }
-        }
-
-        /**
-         * <p>Return the full log of the operation up to this point.</p>
-         */
-        public String getPreviousLog() {
-            synchronized (this.previousLog) {
-                return this.previousLog.toString();
-            }
-        }
-
-        /**
-         * <p>Return the additions to the current full log and flush them.</p>
-         */
-        public String getCurrentLog() {
-            synchronized (this.currentLog) {
-                StringBuffer buffer = new StringBuffer();
-                for (int x = 0; x < this.currentLog.length(); x ++) {
-                    char character = this.currentLog.charAt(x);
-                    switch (character) {
-                        case '\"': buffer.append("\\\""); break;
-                        case '\'': buffer.append("\\\'"); break;
-                        case '\n': buffer.append("<br>");  break;
-                        default:   buffer.append(character);
-                    }
-                }
-                this.currentLog.setLength(0);
-                synchronized (this.previousLog) {
-                    this.previousLog.append(buffer);
-                }
-                return buffer.toString();
-            }
-        }
+    public void setSpaceManager(SpaceManager spaceManager)
+    {
+        this.spaceManager = spaceManager;
     }
 }
