@@ -49,6 +49,7 @@ import org.apache.velocity.Template;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.exception.ParseErrorException;
 import org.apache.velocity.exception.ResourceNotFoundException;
+import org.apache.commons.io.FileUtils;
 
 import com.opensymphony.webwork.views.velocity.VelocityManager;
 import com.atlassian.confluence.util.velocity.ConfluenceVelocityResourceCache;
@@ -68,11 +69,13 @@ implements TemplatesAware {
     /** <p>The {@link ConfigurationManager} used to locate templates.</p> */
     private final PluginBuilder pluginBuilder;
     private final PluginAccessor pluginAccessor;
+    private final ConfigurationManager configurationManager;
 
     /** <p>Create a new {TemplatesManager} instance.</p> */
     public TemplatesManager(ConfigurationManager configurationManager, PluginBuilder pluginBuilder, PluginAccessor pluginAccessor) {
         this.pluginBuilder = pluginBuilder;
         this.pluginAccessor = pluginAccessor;
+        this.configurationManager = configurationManager;
         this.log.info("Instance created");
     }
 
@@ -114,8 +117,28 @@ implements TemplatesAware {
      */
     private URL findTemplate(String spaceKey) {
         ClassLoader cl = pluginAccessor.getClassLoader();
-        return spaceKey == null ? cl.getResource("autoexport.vm") :
-               cl.getResource("autoexport." + spaceKey + ".vm");
+        String templateName = spaceKey == null ? "autoexport.vm" :"autoexport." + spaceKey + ".vm";
+        URL template = cl.getResource(templateName);
+        if (template == null)
+        {
+            File confHome = new File(configurationManager.getConfluenceHome());
+            File velDir = new File(confHome, "velocity");
+            File tempFile = new File(velDir, templateName);
+            if (tempFile.exists())
+            {
+                try
+                {
+                    pluginBuilder.add(templateName, FileUtils.readFileToString(tempFile, "UTF-8"));
+                    tempFile.delete();
+                    template = cl.getResource(templateName);
+                }
+                catch (IOException e)
+                {
+                    log.error("Unable to migrate autoexport template: " + templateName, e);
+                }
+            }
+        }
+        return template;
     }
 
     /* ====================================================================== */

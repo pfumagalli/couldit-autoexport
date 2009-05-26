@@ -59,12 +59,17 @@ public class PluginBuilder implements BundleContextAware
             Enumeration<URL> files = bundle.findEntries("/", "*.vm", false);
             if (files != null)
             {
-                for (URL url = files.nextElement(); files.hasMoreElements(); )
+                while(files.hasMoreElements())
                 {
+                    URL url = files.nextElement();
                     String name = url.getFile();
-                    if (!manip.includeEntry(name))
+                    if (name.startsWith("/"))
                     {
-                        zout.putNextEntry(new ZipEntry(url.getFile()));
+                        name = name.substring(1);
+                    }
+                    if (manip.includeEntry(name))
+                    {
+                        zout.putNextEntry(new ZipEntry(name));
                         IOUtils.copy(url.openStream(), zout);
                     }
                 }
