@@ -1,16 +1,15 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.googlecode.autoexport</groupId>
     <artifactId>autoexport-plugin</artifactId>
     <packaging>jar</packaging>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0.beta1</version>
     <name>Auto Export Plugin</name>
     <description>
         <![CDATA[
         Automatically export all content on changes so that it can be published
         statically using a normal web server like Apache HTTPd.<br /><br />
-        <img src="../images/icons/bullet_creme.gif" height="8" width="8" border="0" alt=""/>
+        <img src="../images/icons/bullet_creme.gif" height="8" width="8" border="0" alt="" />
         <a href="autoexport/configuration.action">Configure plugin</a>
       ]]>
     </description>
@@ -113,8 +112,8 @@
     </distributionManagement>
 
     <scm>
-        <connection>scm:svn:https://couldit-autoexport.googlecode.com/svn/trunk</connection>
-        <developerConnection>scm:svn:https://couldit-autoexport.googlecode.com/svn/trunk</developerConnection>
+        <connection>scm:svn:https://couldit-autoexport.googlecode.com/svn/tags/autoexport-plugin-1.0.0.beta1</connection>
+        <developerConnection>scm:svn:https://couldit-autoexport.googlecode.com/svn/tags/autoexport-plugin-1.0.0.beta1</developerConnection>
     </scm>
 
 </project>
