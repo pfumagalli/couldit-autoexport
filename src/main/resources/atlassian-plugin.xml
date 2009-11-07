@@ -55,7 +55,8 @@
       | - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       | The configured components will be shared amongst the other instances
       | declared below.
-      + --> 
+      + -->
+
   <component name="AutoExport Configuration Manager" class="it.could.confluence.autoexport.ConfigurationManager" key="configurationManager">
     <description>A component managing the different subcomponents of the AutoExport plugin.</description>
   </component>

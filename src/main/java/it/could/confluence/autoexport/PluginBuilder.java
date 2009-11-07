@@ -36,7 +36,8 @@ import java.net.URL;
 
 public class PluginBuilder implements BundleContextAware
 {
-    private static final String TEMPLATES_PLUGIN_KEY = "autoexport.templates";
+    private static final String TEMPLATES_SYMBOLIC_NAME = "autoexport.templates";
+    private static final String TEMPLATES_PLUGIN_KEY = TEMPLATES_SYMBOLIC_NAME + "-1";
     private final PluginAccessor pluginAccessor;
     private final PluginController pluginController;
     private BundleContext bundleContext;
@@ -80,8 +81,16 @@ public class PluginBuilder implements BundleContextAware
             mf.write(zout);
             zout.close();
 
-            File tmpFile = File.createTempFile(TEMPLATES_PLUGIN_KEY, ".jar");
+            File tmpFile = File.createTempFile(TEMPLATES_SYMBOLIC_NAME, ".jar");
             FileUtils.writeByteArrayToFile(tmpFile, bout.toByteArray());
+
+            // Handle both types of names for plugins 2.1 and 2.2+
+            // Uninstall is necessary for Confluence 3.0 due to a bug in plugins 2.2.3.rc1
+            if (pluginAccessor.getPlugin(TEMPLATES_SYMBOLIC_NAME) != null) {
+                pluginController.uninstall(pluginAccessor.getPlugin(TEMPLATES_SYMBOLIC_NAME));
+            } else if (pluginAccessor.getPlugin(TEMPLATES_PLUGIN_KEY) != null) {
+                pluginController.uninstall(pluginAccessor.getPlugin(TEMPLATES_PLUGIN_KEY));
+            }
 
             pluginController.installPlugin(new JarPluginArtifact(tmpFile));
             ServiceReference ref = bundleContext.getServiceReference(PackageAdmin.class.getName());
@@ -133,17 +142,21 @@ public class PluginBuilder implements BundleContextAware
 
     private Bundle getBundle()
     {
-        Plugin plugin = pluginAccessor.getPlugin(TEMPLATES_PLUGIN_KEY);
+        Plugin plugin = pluginAccessor.getPlugin(TEMPLATES_SYMBOLIC_NAME);
+        if (plugin == null)
+        {
+            plugin = pluginAccessor.getPlugin(TEMPLATES_PLUGIN_KEY);
+        }
         if (plugin == null)
         {
             try
             {
-                File tmpFile = File.createTempFile(TEMPLATES_PLUGIN_KEY, ".jar");
+                File tmpFile = File.createTempFile(TEMPLATES_SYMBOLIC_NAME, ".jar");
                 ZipOutputStream zout = new ZipOutputStream(new FileOutputStream(tmpFile));
                 zout.putNextEntry(new ZipEntry("META-INF/MANIFEST.MF"));
                 Manifest mf = new Manifest();
                 mf.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1");
-                mf.getMainAttributes().putValue(Constants.BUNDLE_SYMBOLICNAME, TEMPLATES_PLUGIN_KEY);
+                mf.getMainAttributes().putValue(Constants.BUNDLE_SYMBOLICNAME, TEMPLATES_SYMBOLIC_NAME);
                 mf.getMainAttributes().putValue(Constants.BUNDLE_VERSION, "1");
                 mf.getMainAttributes().putValue(Constants.BUNDLE_DESCRIPTION, "Customized templates for the auto export plugin");
                 mf.getMainAttributes().putValue(Constants.BUNDLE_NAME, "Auto export templates plugin");
@@ -162,23 +175,12 @@ public class PluginBuilder implements BundleContextAware
         Bundle[] bundles = bundleContext.getBundles();
         for (Bundle bundle : bundles)
         {
-            if (bundle.getSymbolicName().equals(TEMPLATES_PLUGIN_KEY))
+            if (bundle.getSymbolicName().equals(TEMPLATES_SYMBOLIC_NAME))
             {
                 return bundle;
             }
         }
         throw new IllegalStateException("The templates bundle is not found");
-    }
-
-    private Map toMap(Dictionary dict)
-    {
-        Map map = new HashMap();
-        Enumeration<String> keys = dict.keys();
-        for (String key = keys.nextElement(); keys.hasMoreElements(); )
-        {
-            map.put(key, dict.get(key));
-        }
-        return map;
     }
 
     public void setBundleContext(BundleContext bundleContext)

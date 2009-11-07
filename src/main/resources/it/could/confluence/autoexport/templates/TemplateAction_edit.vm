@@ -39,7 +39,7 @@
     #if ($actionMessages.size() > 0)
       <div align="center"><a href="$action.getText('uri.config')">$action.getText('act.back')</a></div>
     #else
-      <form action="$action.getText('uri.template-save')" method="post">
+      <form action="$action.getText('uri.template-save')" method="post" name="edittemplateform">
         <table class="grid" width="100%">
           <thead>          
             <tr>
@@ -63,9 +63,9 @@
             <tr>
               <th style="$action.getText('style.buttons')">
                 <input type="hidden" name="space" value="$action.getSpace()">
-                <input type="button" value="$action.getText('act.back')" onclick="location='$action.getText('uri.config')'">
-                <input type="reset"  value="$action.getText('act.reset')">
-                <input type="submit" value="$action.getText('act.save')">
+                <input type="button" name="back" value="$action.getText('act.back')" onclick="location='$action.getText('uri.config')'">
+                <input type="reset"  name="reset" value="$action.getText('act.reset')">
+                <input type="submit" name="save" value="$action.getText('act.save')">
               </td>
             </tr>
           </tfoot>

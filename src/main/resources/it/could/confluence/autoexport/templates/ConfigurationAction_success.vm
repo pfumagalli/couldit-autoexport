@@ -43,7 +43,7 @@
         <table>
           <tr>
             <td>
-              <form action="$action.getText('uri.config-save')" method="post">
+              <form action="$action.getText('uri.config-save')" method="post" name="configform">
                 <table class="grid" width="100%">
                   <thead>          
                     <tr>
@@ -53,22 +53,22 @@
                     </tr>
                   </thead>
                   <tbody>
-                    #bodytag( TextField "label='fld.rootpath'" "name='rootPath'" "value=rootPath" "size=50" )
-                      #param ("description" "fld.rootpath-desc")
+                    #bodytag( TextField "label='$action.getText('fld.rootpath')'" "name='rootPath'" "value=rootPath" "size=50" )
+                      #param ("description" "$action.getText('fld.rootpath-desc')")
                     #end
-                    #bodytag( TextField "label='fld.username'" "name='userName'" "value=userName" "size=20")
-                      #param ("description" "fld.username-desc")
+                    #bodytag( TextField "label='$action.getText('fld.username')'" "name='userName'" "value=userName" "size=20")
+                      #param ("description" "$action.getText('fld.username-desc')")
                     #end
-                    #bodytag( Select "label='fld.encoding'" "name='encoding'" "value=encoding" "list=encodings" )
-                      #param ("description" "fld.encoding-desc")
+                    #bodytag( Select "label='$action.getText('fld.encoding')'" "name='encoding'" "value=encoding" "list=encodings" )
+                      #param ("description" "$action.getText('fld.encoding-desc')")
                     #end
                   </tbody>
                   <tfoot>
                     <tr>
                       <th colspan="2" style="$action.getText('style.buttons')">
-                        <input type="submit" value="$action.getText('act.save')">
-                        <input type="reset"  value="$action.getText('act.reset')">
-                        <input type="button" value="$action.getText('act.delete')"
+                        <input type="submit" name="saveConfig" value="$action.getText('act.save')">
+                        <input type="reset"  name="resetConfig" value="$action.getText('act.reset')">
+                        <input type="button" name="deleteConfig" value="$action.getText('act.delete')"
                                onclick="location='$action.getText('uri.config-delete')'">
                       </td>
                     </tr>
@@ -90,11 +90,11 @@
                       </tr>
                     </thead>
                     <tbody>
-                      #bodytag( Select "label='fld.spaces'" "name='spaces'" "list=spaces" "listKey=key" "listValue=name" )
+                      #bodytag( Select "label='$action.getText('fld.spaces')'" "name='spaces'" "list=spaces" "listKey=key" "listValue=name" )
                         #param ("multiple"    "true")
                         #param ("headerKey"   "*")
                         #param ("headerValue" "$action.getText('fld.spaces-all')")
-                        #param ("description" "fld.spaces-desc")
+                        #param ("description" "$action.getText('fld.spaces-desc')")
                       #end
                     </tbody>
                     <tfoot>
