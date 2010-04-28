@@ -17,9 +17,6 @@
     <profiles>
         <profile>
             <id>conf-2.10</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <properties>
                 <confluence.version>2.10.3</confluence.version>
                 <confluence.data.version>2.10</confluence.data.version>
@@ -27,6 +24,9 @@
         </profile>
         <profile>
             <id>conf-3</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <properties>
                 <confluence.version>3.2.1</confluence.version>
                 <confluence.data.version>3.0</confluence.data.version>
