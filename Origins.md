@@ -1,0 +1,7 @@
+[Atlassian Confluence](http://www.atlassian.com/confluence/) is probably the best wiki system currently available on the web. The only problem with it is that (as any other dynamic application) it has a load breaking point.
+
+At [Apache](http://www.apache.org/) the [infrastructure team](http://www.apache.org/dev/) has always been reluctant to install [Confluence](http://www.atlassian.com/confluence/) because of fears that in case of extremely high peaks of traffic, it could have swamped the entire server and stop serving traffic (note that this is true with whatever dynamic application, including the other components already hosted by the Apache Software Foundation such as [Jira](http://issues.apache.org/jira/), [MoinMoin](http://wiki.apache.org/) and so on).
+
+To solve this problem the fine people at [CodeHaus](http://www.codehaus.org/) have written a set of scripts (in Perl as far as my information goes) exporting Confluence's content out onto the disk so that it can be served directly by Apache, but personally, being a strong antagonist of one off scripts, and liking simple, easy-to-use things, I felt this approach a little bit too cumbersome.
+
+The [AutoExport](AutoExport.md) Plugin is my solution...
